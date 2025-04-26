@@ -1,0 +1,207 @@
+/* Stile base */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #282c34;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+}
+
+/* Contenitore principale */
+.container {
+    text-align: center;
+    background: linear-gradient(145deg, gray, gray);
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 700px;
+    max-height: 90vh; /* Altezza massima per mantenere lo scrolling */
+    overflow-y: scroll; /* Abilita lo scroll verticale all'interno del contenitore */
+}
+
+/* Stile per browser WebKit (Chrome, Safari, Edge) */
+.container::-webkit-scrollbar {
+    display: none;
+}
+
+/* Titolo "Toast Translator" */
+.title {
+    font-size: 4em;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 20px;
+    text-shadow: 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000;
+}
+
+.title .toast {
+    color: #f5deb3;
+}
+
+.title .translator {
+    color: #6a1b9a;
+}
+
+/* Textbox per URL e pulsante di caricamento */
+.login-group {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    box-sizing: border-box;
+    gap: 10px;
+}
+
+.add-group {
+    display: none;
+    width: 100%;
+}
+
+input[type="email"],
+input[type="password"],
+input[type="text"] {
+    flex: 1;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 4px;
+    border: 1px solid #555;
+    background-color: #444;
+    color: white;
+    margin-right: 10px;
+    outline: none;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    margin-right: 10px;
+    background-color: #8e44ad;
+    color: #ffffff;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #732d91;
+}
+
+/* Riquadro addon */
+.addon-info {
+    background-color: #444;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: left;
+    margin-top: 20px;
+    color: #ddd;
+    position: relative;
+}
+
+.addon-info h3 {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+}
+
+.addon-info p {
+    margin: 5px 0;
+}
+
+/* Pulsant "Selezione/Rimuovi"*/
+.addon-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+/* Pulsante a forma di pillola */
+.addon-actions button {
+    flex: 1;
+    margin: 0 5px;
+    padding: 8px;
+    font-size: 14px;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+/* Pulsante "Seleziona" */
+.install-btn {
+    background-color: #2ecc71;
+    color: #333;
+}
+
+.install-btn:hover {
+    background-color: #27ae60;
+}
+
+.translate-button {
+    flex: 1;
+    margin: 0 5px;
+    padding: 8px;
+    font-size: 14px;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+/* Logo dell'addon */
+.addon-logo {
+    max-width: 60px;
+    max-height: 60px;
+    border-radius: 8px;
+    margin-right: 10px;
+}
+
+/* Header del riquadro */
+.addon-header {
+    display: flex;
+    align-items: center;
+}
+
+/* Checkboxs */
+.skip-poster,
+.toast-ratings {
+    display: flex;
+    align-items: left;
+    margin-top: 10px;
+    position: relative;
+}
+.skip-poster label,
+.toast-ratings label {
+    margin-left: 5px;
+}
+
+
+textarea {
+    opacity: 0;
+    width: 90%;
+    height: 0px;
+    margin-top: 10px;
+    margin-left: 10px;
+    padding: 5px 5px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #555;
+    background-color: #444;
+    color: white;
+    resize: none;
+    outline: none;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: opacity 0.3s, height 0.3s;
+    overflow: hidden;
+}
+
+textarea[readonly] {
+    background-color: #333; 
+    pointer-events: none; 
+    border: 1px solid #555;
+}
+
+
+

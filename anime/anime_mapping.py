@@ -23,6 +23,22 @@ def load_kitsu_map() -> dict:
     return mapping_list
 
 
+def load_mal_map() -> dict:
+    """
+    Mappa per convertire un id mal in un id imdb
+    """
+    raw_map = httpx.Client().get(anime_mapping_url).json()
+    mapping_list = {}
+
+    for item in raw_map:
+        mal_id = item.get('mal_id', None)
+        imdb_id = item.get('imdb_id', None)
+        if mal_id != None and imdb_id != None and 'tt' in imdb_id:
+            mapping_list[mal_id] = imdb_id
+
+    return mapping_list
+
+
 def load_imdb_map() -> dict:
     """
     Genera una mappa con chiavi imdb_id con al suo interno:
@@ -95,8 +111,8 @@ if __name__ == '__main__':
     anidb_map = load_anidb_map()
     print(len(imdb_map))
 
-    titans = imdb_map['tt2560140']
-    print(anidb_map["9541"])
+    titans = imdb_map['tt21209876']
+    #print(anidb_map["9541"])
     print(titans)
     """
     kitsu_anidb_map = load_kitsu_to_anidb_map()

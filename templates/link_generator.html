@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toast Translator</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/addonCard.js"></script>
+    <script src="/static/installer.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="title">
+            <span class="toast">Toast</span>
+            <span class="translator">Translator</span>
+        </div>
+
+        <div class="add-group" style="display: flex;">
+            <input type="text" id="addon-url" placeholder="URL dell'addon da aggiungere">
+            <button type="add" onclick="loadAddon(document.getElementById('addon-url').value, true, 'generator')">+</button>
+        </div>
+
+        <div id="addons-container"></div>
+    </div>
+</body>
+</html>
