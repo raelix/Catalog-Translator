@@ -3,16 +3,17 @@ from datetime import timedelta
 import httpx
 import os
 import asyncio
+import random
 
 #from dotenv import load_dotenv
 #load_dotenv()
 
 TMDB_POSTER_URL = 'https://image.tmdb.org/t/p/w500'
 TMDB_BACK_URL = 'https://image.tmdb.org/t/p/original'
-TMDB_API_KEY = os.getenv('TMDB_API_KEY')
+TMDB_API_KEYS = os.getenv('TMDB_API_KEYS').split(',')
 
 # Cache set
-tmp_cache = Cache(maxsize=100000, ttl=timedelta(days=7).total_seconds())
+tmp_cache = Cache(maxsize=100000, ttl=timedelta(days=15).total_seconds())
 tmp_cache.clear()
 
 
@@ -43,7 +44,7 @@ async def get_tmdb_data(client: httpx.AsyncClient, id: str, source: str) -> dict
     params = {
         "external_source": source,
         "language": "it-IT",
-        "api_key": TMDB_API_KEY
+        "api_key": TMDB_API_KEYS[random.randint(1, 15)]
     }
 
     url = f"https://api.themoviedb.org/3/find/{id}"

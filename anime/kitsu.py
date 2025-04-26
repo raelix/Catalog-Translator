@@ -6,7 +6,7 @@ import anime.anime_mapping as anime_mapping
 kitsu_addon_url = 'https://anime-kitsu.strem.fun'
 
 # Cache load
-kitsu_cache = Cache(maxsize=float('inf'), ttl=timedelta(days=30).total_seconds())
+kitsu_cache = Cache(maxsize=float('inf'), ttl=timedelta(days=15).total_seconds())
 kitsu_cache.clear()
 
 # Load kitsu -> imdb converter
