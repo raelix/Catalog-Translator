@@ -1,3 +1,5 @@
+import logging
+
 from cache import Cache
 from datetime import timedelta
 import httpx
@@ -46,6 +48,7 @@ async def get_tmdb_data(client: httpx.AsyncClient, id: str, source: str) -> dict
         "language": "it-IT",
         "api_key": TMDB_API_KEYS[random.randint(1, 15)]
     }
+    logging.info(f'Using {params.get("api_key")} key')
 
     url = f"https://api.themoviedb.org/3/find/{id}"
     item = tmp_cache.get(id)
