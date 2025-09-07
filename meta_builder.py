@@ -7,7 +7,7 @@ import asyncio
 import urllib.parse
 import translator
 
-REQUEST_TIMEOUT = 20
+REQUEST_TIMEOUT = 100
 MAX_CAST_SEARCH = 3
 
 async def build_metadata(id: str, type: str):
