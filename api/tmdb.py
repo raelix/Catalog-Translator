@@ -17,7 +17,7 @@ tmp_cache.clear()
 
 
 # Too many requests retry
-async def fetch_and_retry(client: httpx.AsyncClient, id: str, url: str, params: dict, max_retries=5) -> dict:
+async def fetch_and_retry(client: httpx.AsyncClient, id: str, url: str, params={}, max_retries=10) -> dict:
     headers = {
         "accept": "application/json"
     }
@@ -53,10 +53,33 @@ async def get_tmdb_data(client: httpx.AsyncClient, id: str, source: str) -> dict
         return item
     else:
         return await fetch_and_retry(client, id, url, params)
+    
 
+# Get movie detail with cast video and images
+async def get_movie_details(client: httpx.AsyncClient, id: str) -> dict:
+    url = f"https://api.themoviedb.org/3/movie/{id}?append_to_response=credits,videos,images&language=it-IT&include_image_language=it,null&api_key={TMDB_API_KEY}"
+    return await fetch_and_retry(client, id, url)
+
+
+# Get series detail with cast video and images
+async def get_series_details(client: httpx.AsyncClient, id: str) -> dict:
+    url = f"https://api.themoviedb.org/3/tv/{id}?append_to_response=external_ids,credits,videos,images&language=it-IT&include_image_language=it,null&api_key={TMDB_API_KEY}"
+    return await fetch_and_retry(client, id, url)
+
+
+# Get series detail with cast video and images
+async def get_season_details(client: httpx.AsyncClient, season_id: str, season_number) -> dict:
+    params = {
+        "language": "it-IT",
+        "append_to_response": "external_ids",
+        "api_key": TMDB_API_KEY
+    }
+
+    url = f"https://api.themoviedb.org/3/tv/{season_id}/season/{season_number}"
+    return await fetch_and_retry(client, id, url, params)
 
 # Converting imdb id to tmdb id
-async def convert_imdb_to_tmdb(imdb_id: str) -> dict:
+async def convert_imdb_to_tmdb(imdb_id: str) -> str:
 
     tmdb_data = tmp_cache.get(imdb_id)
 

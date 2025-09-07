@@ -8,18 +8,20 @@ from datetime import timedelta
 from cache import Cache
 from anime import kitsu, mal
 import meta_merger
+import meta_builder
 import translator
 import asyncio
 import httpx
-import tmdb
+from api import tmdb
 import base64
 import os
 
 # Settings
-translator_version = 'v0.0.8'
+translator_version = 'v0.0.9'
 FORCE_PREFIX = False
 FORCE_META = False
 USE_TMDB_ID_META = True
+USE_TMDB_ADDON = False
 REQUEST_TIMEOUT = 120
 COMPATIBILITY_ID = ['tt', 'kitsu', 'mal']
 
@@ -40,15 +42,6 @@ templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
-# Config CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 stremio_headers = {
     'connection': 'keep-alive', 
     'user-agent': 'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) QtWebEngine/5.15.2 Chrome/83.0.4103.122 Safari/537.36 StremioShell/4.4.168', 
@@ -60,14 +53,10 @@ stremio_headers = {
     'accept-encoding': 'gzip, deflate, br'
 }
 
-#tmdb_addon_url = 'https://94c8cb9f702d-tmdb-addon.baby-beamup.club/%7B%22provide_imdbId%22%3A%22true%22%2C%22language%22%3A%22it-IT%22%7D'
-#tmdb_madari_url = 'https://tmdb-catalog.madari.media/%7B%22provide_imdbId%22%3A%22true%22%2C%22language%22%3A%22it-IT%22%7D'
-#tmdb_elfhosted = 'https://tmdb.elfhosted.com/%7B%22provide_imdbId%22%3A%22true%22%2C%22language%22%3A%22it-IT%22%7D'
-
 tmdb_addons_pool = [
     'https://tmdb.elfhosted.com/%7B%22provide_imdbId%22%3A%22true%22%2C%22language%22%3A%22it-IT%22%7D', # Elfhosted
-    'https://94c8cb9f702d-tmdb-addon.baby-beamup.club/%7B%22provide_imdbId%22%3A%22true%22%2C%22language%22%3A%22it-IT%22%7D', # Official
-    'https://tmdb-catalog.madari.media/%7B%22provide_imdbId%22%3A%22true%22%2C%22language%22%3A%22it-IT%22%7D' # Madari
+    'https://94c8cb9f702d-tmdb-addon.baby-beamup.club/%7B%22provide_imdbId%22%3A%22true%22%2C%22language%22%3A%22it-IT%22%7D' # Official
+    #'https://tmdb-catalog.madari.media/%7B%22provide_imdbId%22%3A%22true%22%2C%22language%22%3A%22it-IT%22%7D' # Madari (offline)
 ]
 
 tmdb_addon_meta_url = tmdb_addons_pool[0]
@@ -90,6 +79,7 @@ async def home(request: Request):
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
+    response.headers["Surrogate-Control"] = "no-store"
     return response
 
 @app.get('/{addon_url}/{user_settings}/configure')
@@ -103,6 +93,7 @@ async def link_generator(request: Request):
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
+    response.headers["Surrogate-Control"] = "no-store"
     return response
 
 
@@ -154,7 +145,7 @@ async def get_catalog(response: Response, addon_url, type: str, user_settings: s
             catalog = response.json()
         except:
             print(response.text)
-            return {}
+            return json_response({})
 
         if 'metas' in catalog:
             if type == 'anime':
@@ -164,7 +155,7 @@ async def get_catalog(response: Response, addon_url, type: str, user_settings: s
             ]
             tmdb_details = await asyncio.gather(*tasks)
         else:
-            return {}
+            return json_response({})
 
     new_catalog = translator.translate_catalog(catalog, tmdb_details, user_settings['sp'], user_settings['tr'])
     return json_response(new_catalog)
@@ -183,7 +174,7 @@ async def get_meta(request: Request,response: Response, addon_url, type: str, id
 
         # Return cached meta
         if meta != None:
-            return meta
+            return json_response(meta)
 
         # Not in cache
         else:
@@ -191,23 +182,27 @@ async def get_meta(request: Request,response: Response, addon_url, type: str, id
             if 'tt' in id:
                 tmdb_id = await tmdb.convert_imdb_to_tmdb(id)
                 tasks = [
-                    client.get(f"{tmdb_addon_meta_url}/meta/{type}/{tmdb_id}.json"),
+                    client.get(f"{tmdb_addon_meta_url}/meta/{type}/{tmdb_id}.json") if USE_TMDB_ADDON else meta_builder.build_metadata(id, type),
                     client.get(f"{cinemeta_url}/meta/{type}/{id}.json")
                 ]
                 metas = await asyncio.gather(*tasks)
-                # TMDB addon retry and switch addon
-                for retry in range(6):
-                    if metas[0].status_code == 200:
-                        tmdb_meta = metas[0].json()
-                        break
-                    else:
-                        index = tmdb_addons_pool.index(tmdb_addon_meta_url)
-                        tmdb_addon_meta_url = tmdb_addons_pool[(index + 1) % len(tmdb_addons_pool)]
-                        metas[0] = await client.get(f"{tmdb_addon_meta_url}/meta/{type}/{tmdb_id}.json")
+                
+                if USE_TMDB_ADDON:
+                    # TMDB addon retry and switch addon
+                    for retry in range(6):
                         if metas[0].status_code == 200:
                             tmdb_meta = metas[0].json()
                             break
-                
+                        else:
+                            index = tmdb_addons_pool.index(tmdb_addon_meta_url)
+                            tmdb_addon_meta_url = tmdb_addons_pool[(index + 1) % len(tmdb_addons_pool)]
+                            metas[0] = await client.get(f"{tmdb_addon_meta_url}/meta/{type}/{tmdb_id}.json")
+                            if metas[0].status_code == 200:
+                                tmdb_meta = metas[0].json()
+                                break
+                else:
+                    tmdb_meta = metas[0]
+
                 cinemeta_meta = metas[1].json()
                 
                 # Not empty tmdb meta
@@ -246,7 +241,6 @@ async def get_meta(request: Request,response: Response, addon_url, type: str, id
                             ]
                             description, episodes = await asyncio.gather(*tasks)
                             meta['meta']['videos'] = episodes
-                            meta['meta']['videos'] = await translator.translate_episodes(client, meta['meta']['videos'])
 
                         elif type == 'movie':
                             description = await translator.translate_with_api(client, description)
@@ -255,7 +249,7 @@ async def get_meta(request: Request,response: Response, addon_url, type: str, id
                     
                     # Empty cinemeta and tmdb return empty meta
                     else:
-                        return {}
+                        return json_response({})
                     
                 
             # Handle kitsu and mal ids
@@ -267,18 +261,22 @@ async def get_meta(request: Request,response: Response, addon_url, type: str, id
                     imdb_id, is_converted = await mal.convert_to_imdb(id.replace('_',':'), type)
 
                 if is_converted:
-                    tmdb_id = await tmdb.convert_imdb_to_tmdb(imdb_id)
-                    # TMDB Addons retry
-                    for retry in range(6):
-                        response = await client.get(f"{tmdb_addon_meta_url}/meta/{type}/{tmdb_id}.json")
-                        if response.status_code == 200:
-                            meta = response.json()
-                            break
-                        else:
-                            # Loop addon pool
-                            index = tmdb_addons_pool.index(tmdb_addon_meta_url)
-                            tmdb_addon_meta_url = tmdb_addons_pool[(index + 1) % len(tmdb_addons_pool)]
-                            print(f"Switch to {tmdb_addon_meta_url}")
+
+                    if USE_TMDB_ADDON:
+                        tmdb_id = await tmdb.convert_imdb_to_tmdb(imdb_id)
+                        # TMDB Addons retry
+                        for retry in range(6):
+                            response = await client.get(f"{tmdb_addon_meta_url}/meta/{type}/{tmdb_id}.json")
+                            if response.status_code == 200:
+                                meta = response.json()
+                                break
+                            else:
+                                # Loop addon pool
+                                index = tmdb_addons_pool.index(tmdb_addon_meta_url)
+                                tmdb_addon_meta_url = tmdb_addons_pool[(index + 1) % len(tmdb_addons_pool)]
+                                print(f"Switch to {tmdb_addon_meta_url}")
+                    else:
+                        meta = await meta_builder.build_metadata(imdb_id, type)
 
                     if len(meta['meta']) > 0:
                         if type == 'movie':

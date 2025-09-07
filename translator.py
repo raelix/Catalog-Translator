@@ -1,5 +1,5 @@
 from cache import Cache
-import tmdb
+import api.tmdb as tmdb
 import asyncio
 import httpx
 import os
