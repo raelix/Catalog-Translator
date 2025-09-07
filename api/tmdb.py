@@ -57,14 +57,26 @@ async def get_tmdb_data(client: httpx.AsyncClient, id: str, source: str) -> dict
 
 # Get movie detail with cast video and images
 async def get_movie_details(client: httpx.AsyncClient, id: str) -> dict:
-    url = f"https://api.themoviedb.org/3/movie/{id}?append_to_response=credits,videos,images&language=it-IT&include_image_language=it,null&api_key={TMDB_API_KEY}"
-    return await fetch_and_retry(client, id, url)
+    params = {
+        "api_key": TMDB_API_KEY,
+        "language": "it-IT",
+        "append_to_response": "credits,videos,images",
+        "include_image_language": "it,null"
+    }
+    url = f"https://api.themoviedb.org/3/movie/{id}"
+    return await fetch_and_retry(client, id, url, params=params)
 
 
 # Get series detail with cast video and images
 async def get_series_details(client: httpx.AsyncClient, id: str) -> dict:
-    url = f"https://api.themoviedb.org/3/tv/{id}?append_to_response=external_ids,credits,videos,images&language=it-IT&include_image_language=it,null&api_key={TMDB_API_KEY}"
-    return await fetch_and_retry(client, id, url)
+    params = {
+        "api_key": TMDB_API_KEY,
+        "language": "it-IT",
+        "append_to_response": "external_ids,credits,videos,images",
+        "include_image_language": "it,null"
+    }
+    url = f"https://api.themoviedb.org/3/tv/{id}"
+    return await fetch_and_retry(client, id, url, params=params)
 
 
 # Get series detail with cast video and images
