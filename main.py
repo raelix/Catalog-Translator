@@ -314,6 +314,10 @@ async def get_subs(addon_url, path: str):
     addon_url = decode_base64_url(addon_url)
     return RedirectResponse(f"{addon_url}/stream/{path}")
 
+# Anime map reloader
+@app.get('/map_reload')
+async def reload_anime_mapping():
+    pass
 
 def decode_base64_url(encoded_url):
     padding = '=' * (-len(encoded_url) % 4)

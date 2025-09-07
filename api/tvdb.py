@@ -12,6 +12,7 @@ TVDB_PIN = None
 TVDB_USER = os.getenv('TVDB_USER')
 
 BASE_URL = "https://api4.thetvdb.com/v4"
+IMAGE_URL = "https://thetvdb.com"
 
 # Cache set
 token_cache = Cache(maxsize=1, ttl=timedelta(days=29).total_seconds())

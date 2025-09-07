@@ -122,17 +122,17 @@ async def series_build_episodes(client: httpx.AsyncClient, imdb_id: str, tmdb_id
                 videos.append(
                     {
                         "tvdb_id": episode['id'],
-                        "name": episode['name'] if episode['name'] != None else '',
+                        "name": f"Episodio {episode['number']}",
                         "season": episode['seasonNumber'],
                         "number": episode['number'],
                         "firstAired": episode['aired'] + 'T05:00:00.000Z' if episode['aired'] is not None else None,
                         "rating": "0",
-                        "overview": episode['overview'] if episode['overview'] != None else '',
-                        "thumbnail": tmdb.TMDB_BACK_URL + episode['image'] if episode.get('image', '') is not None else None,
+                        "overview": '',
+                        "thumbnail": tvdb.IMAGE_URL + episode['image'] if episode['image'] != None else None,
                         "id": f"{imdb_id}:{episode['seasonNumber']}:{episode['number']}",
                         "released": episode['aired'] + 'T05:00:00.000Z' if episode['aired'] is not None else None,
                         "episode": episode['number'],
-                        "description": episode['overview']
+                        "description": ''
                     }
                 )
             return await translator.translate_episodes(client, videos)
