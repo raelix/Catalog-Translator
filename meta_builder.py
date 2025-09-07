@@ -43,6 +43,7 @@ async def build_metadata(id: str, type: str):
         data = await asyncio.gather(*tasks)
         tmdb_data, fanart_data = data[0], data[1]
         if len(tmdb_data) == 0:
+            print('TMDB data not found.')
             return {"meta": {}}
         
         title = tmdb_data.get(parse_title, '')
