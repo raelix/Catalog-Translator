@@ -18,6 +18,8 @@ async def build_metadata(id: str, type: str):
     elif'tmdb:' in tmdb_id:
         tmdb_id = tmdb_id.replace('tmdb:', '')
 
+    print(tmdb_id)
+
     async with httpx.AsyncClient(follow_redirects=True, timeout=REQUEST_TIMEOUT) as client:
 
         if type == 'movie':
