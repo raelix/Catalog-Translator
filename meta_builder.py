@@ -11,14 +11,13 @@ REQUEST_TIMEOUT = 100
 MAX_CAST_SEARCH = 3
 
 async def build_metadata(id: str, type: str):
+    tmdb_id = None
     if 'tt' in id:
         tmdb_id = await tmdb.convert_imdb_to_tmdb(id)
     if 'tmdb:' in id: 
         tmdb_id = id.replace('tmdb:', '')
-    elif'tmdb:' in tmdb_id:
+    elif 'tmdb:' in tmdb_id:
         tmdb_id = tmdb_id.replace('tmdb:', '')
-
-    print(tmdb_id)
 
     async with httpx.AsyncClient(follow_redirects=True, timeout=REQUEST_TIMEOUT) as client:
 
@@ -43,7 +42,6 @@ async def build_metadata(id: str, type: str):
         data = await asyncio.gather(*tasks)
         tmdb_data, fanart_data = data[0], data[1]
         if len(tmdb_data) == 0:
-            print('TMDB data not found.')
             return {"meta": {}}
         
         title = tmdb_data.get(parse_title, '')
@@ -101,7 +99,7 @@ async def series_build_episodes(client: httpx.AsyncClient, imdb_id: str, tmdb_id
     for season in seasons:
         tasks.append(tmdb.get_season_details(client, tmdb_id, season['season_number']))
 
-    seasons = await asyncio.gather(*tasks)
+    tmdb_seasons = await asyncio.gather(*tasks)
 
     # Anime tvdb mapping
     if 'kitsu' in imdb_id or 'mal' in imdb_id or imdb_id in kitsu.imdb_ids_map:
@@ -110,19 +108,26 @@ async def series_build_episodes(client: httpx.AsyncClient, imdb_id: str, tmdb_id
             season for season in tvdb_response['data']['seasons']
             if season.get('type', {}).get('type') == "official"
         ]
+
+        # Sort by season number
+        tvdb_seasons.sort(key=lambda s: s.get('number', 0))
+
+        # Skip specials season
+        tmdb_offset = len([s for s in tmdb_seasons if s.get('season_number', -1) == 0])
+        tvdb_offset = len([s for s in tvdb_seasons if s.get('number', -1) == 0])
         
-        if len(seasons) != len(tvdb_seasons):
+        if len(tmdb_seasons[tmdb_offset:]) != len(tvdb_seasons[tvdb_offset:]):
             print('Merge TVDB')
             for episode in tvdb_response['data']['episodes']:
                 videos.append(
                     {
                         "tvdb_id": episode['id'],
-                        "name": episode['name'],
+                        "name": episode['name'] if episode['name'] != None else '',
                         "season": episode['seasonNumber'],
                         "number": episode['number'],
                         "firstAired": episode['aired'] + 'T05:00:00.000Z' if episode['aired'] is not None else None,
                         "rating": "0",
-                        "overview": episode['overview'],
+                        "overview": episode['overview'] if episode['overview'] != None else '',
                         "thumbnail": tmdb.TMDB_BACK_URL + episode['image'] if episode.get('image', '') is not None else None,
                         "id": f"{imdb_id}:{episode['seasonNumber']}:{episode['number']}",
                         "released": episode['aired'] + 'T05:00:00.000Z' if episode['aired'] is not None else None,
@@ -134,7 +139,7 @@ async def series_build_episodes(client: httpx.AsyncClient, imdb_id: str, tmdb_id
 
     
 
-    for season in seasons:
+    for season in tmdb_seasons:
         for episode_number, episode in enumerate(season['episodes'], start=1):
             videos.append(
                 {

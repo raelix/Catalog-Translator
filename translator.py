@@ -86,6 +86,8 @@ async def translate_episodes(client: httpx.AsyncClient, original_episodes: list[
             except: pass
             try: new_episodes[t_index]['overview'] = detail['overview']
             except: pass
+            try: new_episodes[t_index]['description'] = detail['overview']
+            except: pass
             try: new_episodes[t_index]['thumbnail'] = tmdb.TMDB_BACK_URL + detail['still_path']
             except: pass
 
