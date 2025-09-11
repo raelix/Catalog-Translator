@@ -7,10 +7,15 @@ import asyncio
 import urllib.parse
 import translator
 import math
+import json
 
 REQUEST_TIMEOUT = 100
 MAX_CAST_SEARCH = 3
 TMDB_ERROR_EPISODE_OFFSET = 50
+
+# Load TMDB exceptions
+with open("anime/tmdb_exceptions.json", "r", encoding="utf-8") as f:
+    TMDB_EXCEPTIONS = json.load(f) 
 
 async def build_metadata(id: str, type: str):
     tmdb_id = None
@@ -104,7 +109,7 @@ async def series_build_episodes(client: httpx.AsyncClient, imdb_id: str, tmdb_id
     tmdb_seasons = await asyncio.gather(*tasks)
 
     # Anime tvdb mapping
-    if 'kitsu' in imdb_id or 'mal' in imdb_id or imdb_id in kitsu.imdb_ids_map:
+    if ('kitsu' in imdb_id or 'mal' in imdb_id or imdb_id in kitsu.imdb_ids_map) and imdb_id not in TMDB_EXCEPTIONS:
         # Use TVDB data
 
         # Extract pre translated episodes
@@ -134,20 +139,6 @@ async def series_build_episodes(client: httpx.AsyncClient, imdb_id: str, tmdb_id
                 "episode": episode['number'],
                 "description": ''
             }
-
-            # Absolute checker
-            is_absolute_case = any(
-                value["season"] == -1
-                for item in kitsu.imdb_ids_map[imdb_id]['kitsu_ids']
-                for value in item.values()
-            )
-
-            # Insert season and episode number for absolute order cases
-            if is_absolute_case:
-                if episode['absoluteNumber'] != 0:
-                    video['season'] = 1
-                    video['number'] = episode['absoluteNumber']
-                    video['episode'] = episode['absoluteNumber']
 
             # Insert not fully translated episode to try translate it with TMDB
             if episode['seasonNumber'] != 0 and (episode['name'] == None or episode['overview'] == None):
