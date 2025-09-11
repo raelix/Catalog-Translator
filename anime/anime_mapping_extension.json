@@ -26,5 +26,19 @@
         "kitsu_id": 7926,
         "type": "TV",
         "anidb_id": -4
+    },
+    {
+        "_comment": "Arcane",
+        "imdb_id": "tt11126994",
+        "kitsu_id": 45469,
+        "type": "ONA",
+        "anidb_id": -5
+    },
+    {
+        "_comment": "Arcane Season 2",
+        "imdb_id": "tt11126994",
+        "kitsu_id": 45515,
+        "type": "ONA",
+        "anidb_id": -6
     }
 ]

@@ -30,5 +30,21 @@
         "kitsu": 7926,
         "tvdb_season": 3,
         "tvdb_epoffset": 0
+    },
+    "-5": {
+        "_comment": "Arcane",
+        "tvdb_id": 371028,
+        "imdb_id": "tt11126994",
+        "kitsu": 45469,
+        "tvdb_season": 1,
+        "tvdb_epoffset": 0
+    },
+    "-6": {
+        "_comment": "Arcane Season 2",
+        "tvdb_id": 371028,
+        "imdb_id": "tt11126994",
+        "kitsu": 45515,
+        "tvdb_season": 2,
+        "tvdb_epoffset": 0
     }
 }
