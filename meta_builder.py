@@ -135,6 +135,20 @@ async def series_build_episodes(client: httpx.AsyncClient, imdb_id: str, tmdb_id
                 "description": ''
             }
 
+            # Absolute checker
+            is_absolute_case = any(
+                value["season"] == -1
+                for item in kitsu.imdb_ids_map[imdb_id]['kitsu_ids']
+                for value in item.values()
+            )
+
+            # Insert season and episode number for absolute order cases
+            if is_absolute_case:
+                if episode['absoluteNumber'] != 0:
+                    video['season'] = 1
+                    video['number'] = episode['absoluteNumber']
+                    video['episode'] = episode['absoluteNumber']
+
             # Insert not fully translated episode to try translate it with TMDB
             if episode['seasonNumber'] != 0 and (episode['name'] == None or episode['overview'] == None):
                 video['tvdb_id'] = episode['id']
@@ -142,8 +156,8 @@ async def series_build_episodes(client: httpx.AsyncClient, imdb_id: str, tmdb_id
             videos.append(video)
         return await translator.translate_episodes(client, videos)
 
-    
 
+    # TMDB episodes builder
     for season in tmdb_seasons:
         for episode_number, episode in enumerate(season['episodes'], start=1):
             videos.append(
