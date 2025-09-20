@@ -32,7 +32,7 @@ async def fetch_and_retry(client: httpx.AsyncClient, id: str, url: str, params={
             if 'tt' in id:
                 meta_dict['imdb_id'] = id
                 tmp_cache.set(id, meta_dict)
-                
+
             return meta_dict
 
         elif response.status_code == 429:
@@ -92,7 +92,7 @@ async def get_season_details(client: httpx.AsyncClient, season_id: str, season_n
     }
 
     url = f"https://api.themoviedb.org/3/tv/{season_id}/season/{season_number}"
-    return await fetch_and_retry(client, id, url, params)
+    return await fetch_and_retry(client, season_id, url, params)
 
 # Converting imdb id to tmdb id
 async def convert_imdb_to_tmdb(imdb_id: str) -> str:

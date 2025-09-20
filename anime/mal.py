@@ -23,8 +23,6 @@ def load_anime_map():
 	# Load season / episode map
 	imdb_ids_map = anime_mapping.load_imdb_map()
 
-load_anime_map()
-
 async def convert_to_imdb(mal_id: str, type: str) -> str:
 	is_converted = False
 	imdb_id = mal_cache.get(mal_id)

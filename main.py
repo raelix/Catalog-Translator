@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, Query
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from datetime import timedelta
 from cache import Cache
 from anime import kitsu, mal
+from anime import anime_mapping
 import meta_merger
 import meta_builder
 import translator
@@ -24,6 +25,9 @@ USE_TMDB_ADDON = False
 REQUEST_TIMEOUT = 120
 COMPATIBILITY_ID = ['tt', 'kitsu', 'mal']
 
+# ENV file
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
+
 # Cache set
 meta_cache = Cache(maxsize=100000, ttl=timedelta(hours=12).total_seconds())
 meta_cache.clear()
@@ -32,6 +36,10 @@ meta_cache.clear()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print('Started')
+    # Load anime mapping lists
+    await anime_mapping.download_maps()
+    kitsu.load_anime_map()
+    mal.load_anime_map()
     yield
     print('Shutdown')
 
@@ -315,8 +323,25 @@ async def get_subs(addon_url, path: str):
 
 # Anime map reloader
 @app.get('/map_reload')
-async def reload_anime_mapping():
-    pass
+async def reload_anime_mapping(password: str = Query(...)):
+    if password == ADMIN_PASSWORD:
+        await anime_mapping.download_maps()
+        kitsu.load_anime_map()
+        mal.load_anime_map()
+        return json_response({"status": "Anime map updated."})
+    else:
+        return json_response({"Error": "Access delined"})
+
+# Cache expires
+@app.get('/clean_cache')
+async def clean_cache(password: str = Query(...)):
+    if password == ADMIN_PASSWORD:
+        tmdb.tmp_cache.expire()
+        meta_cache.expire()
+        return json_response({"status": "Cache cleaned."})
+    else:
+        return json_response({"Error": "Access delined"})
+
 
 def decode_base64_url(encoded_url):
     padding = '=' * (-len(encoded_url) % 4)

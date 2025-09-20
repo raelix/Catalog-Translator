@@ -1,12 +1,15 @@
 import httpx
 import bisect
 import json
+import asyncio
 
 # Map for IDs
 anime_mapping_url = 'https://raw.githubusercontent.com/Fribb/anime-lists/refs/heads/master/anime-list-full.json'
+anime_id_map = None
 
 # Map for season/episode
 anime_db_map_url = 'https://raw.githubusercontent.com/Kometa-Team/Anime-IDs/master/anime_ids.json'
+anime_season_map = None
 
 # Load anidb Extension from file
 with open("anime/anidb_extension.json", "r", encoding="utf-8") as f:
@@ -16,12 +19,23 @@ with open("anime/anidb_extension.json", "r", encoding="utf-8") as f:
 with open("anime/anime_mapping_extension.json", "r", encoding="utf-8") as f:
     anime_mapping_extension = json.load(f) 
 
+async def download_maps():
+    global anime_id_map, anime_season_map
+    async with httpx.AsyncClient(timeout=20) as client:
+        tasks = [
+            client.get(anime_mapping_url),
+            client.get(anime_db_map_url)
+        ]
+        results = await asyncio.gather(*tasks)
+        anime_id_map = results[0].json() + anime_mapping_extension
+        anime_season_map = {**results[1].json(), **anidb_extension}
+        
 
 def load_kitsu_map() -> dict:
     """
     Mappa per convertire un id kitsu in un id imdb
     """
-    raw_map = httpx.Client().get(anime_mapping_url).json() + anime_mapping_extension
+    raw_map = anime_id_map#httpx.Client().get(anime_mapping_url).json() + anime_mapping_extension
     mapping_list = {}
 
     for item in raw_map:
@@ -37,7 +51,7 @@ def load_mal_map() -> dict:
     """
     Mappa per convertire un id mal in un id imdb
     """
-    raw_map = httpx.Client().get(anime_mapping_url).json() + anime_mapping_extension
+    raw_map = anime_id_map#httpx.Client().get(anime_mapping_url).json() + anime_mapping_extension
     mapping_list = {}
 
     for item in raw_map:
@@ -56,9 +70,10 @@ def load_imdb_map() -> dict:
     Serve per incorporare tutti le stagioni in un unico id (imdb)
     """
 
-    raw_map = httpx.Client().get(anime_mapping_url).json() + anime_mapping_extension
-    with httpx.Client() as client:
-        anidb_map = {**client.get(anime_db_map_url).json(), **anidb_extension}
+    raw_map = anime_id_map#httpx.Client().get(anime_mapping_url).json() + anime_mapping_extension
+    anidb_map = anime_season_map
+    #with httpx.Client() as client:
+        #anidb_map = {**client.get(anime_db_map_url).json(), **anidb_extension}
     map = {}
 
     for item in raw_map:
@@ -94,7 +109,7 @@ def load_kitsu_to_anidb_map():
     """
     Genera una mappa da chiave valore kitsu id -> anime db id
     """
-    raw_map = httpx.Client().get(anime_mapping_url).json()
+    raw_map = anime_id_map#httpx.Client().get(anime_mapping_url).json()
     map = {}
 
     for item in raw_map:
