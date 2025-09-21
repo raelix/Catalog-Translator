@@ -29,7 +29,7 @@ async def fetch_and_retry(client: httpx.AsyncClient, id: str, url: str, params={
             meta_dict = response.json()
 
             # Only imdb_id cache save
-            if 'tt' in id:
+            if 'tt' in str(id):
                 meta_dict['imdb_id'] = id
                 tmp_cache.set(id, meta_dict)
 
