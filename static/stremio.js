@@ -33,12 +33,16 @@ async function stremioLogin() {
 }
 
 async function stremioLoadAddons(authKey) {
+    const loader = document.querySelector(".loader");
     const addonCollection = await stremioAddonCollectionGet(authKey);
+
+    loader.style.visibility = "visible";
     // Load Addons
     for(var i=0; i<addonCollection.result.addons.length; i++) {
         var url = addonCollection.result.addons[i].transportUrl;
         await loadAddon(url);
     }
+    loader.style.visibility = "hidden";
 }
 
 async function stremioAddonCollectionGet(authKey) {

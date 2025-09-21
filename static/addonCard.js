@@ -74,6 +74,7 @@ function createAddonCard(manifest, url, type="default") {
     addonCard.appendChild(createAddonDescription(manifest));
     addonCard.appendChild(createAddonVersion(manifest));
     addonCard.appendChild(createSkipPosterOption(manifest));
+    addonCard.appendChild(createToastRatingsOption(manifest));
 
     const actionsDiv = document.createElement("div");
     if (type == "default") {
@@ -141,7 +142,22 @@ function createSkipPosterOption(manifest) {
     return skipPosterDiv;
 }
 
-// Toast Ratings option removed by design
+function createToastRatingsOption(manifest) {
+    const toastRatingsDiv = document.createElement("div");
+    toastRatingsDiv.className = "toast-ratings";
+
+    const toastRatingsCheckbox = document.createElement("input");
+    toastRatingsCheckbox.type = "checkbox";
+    toastRatingsCheckbox.id = `toastRatings-${manifest.name}`;
+    toastRatingsDiv.appendChild(toastRatingsCheckbox);
+
+    const toastRatingsLabel = document.createElement("label");
+    toastRatingsLabel.htmlFor = `toastRagings-${manifest.name}`;
+    toastRatingsLabel.innerText = "Toast Ratings";
+    toastRatingsDiv.appendChild(toastRatingsLabel);
+
+    return toastRatingsDiv;
+}
 
 function createInstallButton(manifest, url) {
     const installBtn = document.createElement("button");
@@ -188,13 +204,14 @@ function createLinkTextBox(link, manifest) {
 
 function toggleAddonSelection(installBtn, manifest, url) {
     const spCheckbox = document.getElementById(`skipPoster-${manifest.name}`);
+    const trCheckbox = document.getElementById(`toastRatings-${manifest.name}`);
     if (installBtn.state === "active") {
         installBtn.state = "not_active";
         installBtn.innerText = "Rimuovi";
         installBtn.style.backgroundColor = "#ff4b4b";
         
         const skipQuery = spCheckbox.checked ? 1 : 0;
-    const rateQuery = 0; // Toast Ratings disabled
+        const rateQuery = trCheckbox.checked ? 1 : 0;
         spCheckbox.disabled = true;
         manifest.transportUrl = url;
         manifest.skipPoster = skipQuery;
@@ -202,6 +219,7 @@ function toggleAddonSelection(installBtn, manifest, url) {
         transteArray.push(manifest);
     } else {
         spCheckbox.disabled = false;
+        trCheckbox.disabled = false;
         installBtn.state = "active";
         installBtn.innerText = "Seleziona";
         installBtn.style.backgroundColor = "#2ecc71";
@@ -219,9 +237,10 @@ async function copyLinkCard(manifest) {
 
 function generateLinkByCard(manifest, url, linkGeneratorFunc) {
     const spCheckbox = document.getElementById(`skipPoster-${manifest.name}`);
+    const trCheckbox = document.getElementById(`toastRatings-${manifest.name}`);
     const linkBox = document.getElementById(`linkBox-${manifest.name}`)
     const skipQuery = spCheckbox.checked ? 1 : 0;
-    const rateQuery = 0; // Toast Ratings disabled
+    const rateQuery = trCheckbox.checked ? 1 : 0;
     const link = linkGeneratorFunc(url, skipQuery, rateQuery);
     
     linkBox.value = link;

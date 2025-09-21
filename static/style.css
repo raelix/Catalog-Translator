@@ -189,6 +189,9 @@ button:hover {
 .skip-poster { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
 .skip-poster input { accent-color: var(--neon-cyan); width: 18px; height: 18px; }
 .skip-poster label { font-size: 13px; color: var(--text); opacity: 0.9; }
+.toast-ratings { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.toast-ratings input { accent-color: var(--neon-cyan); width: 18px; height: 18px; }
+.toast-ratings label { font-size: 13px; color: var(--text); opacity: 0.9; }
 
 textarea {
     opacity: 0;
@@ -230,6 +233,7 @@ textarea[readonly] { pointer-events: none; }
     height: 50px;
     margin: 20px auto;
     animation: spin 1s linear infinite;
+    visibility: hidden;
 }
 
 @keyframes spin {
