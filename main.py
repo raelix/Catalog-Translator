@@ -17,7 +17,7 @@ import base64
 import os
 
 # Settings
-translator_version = 'v0.1.1'
+translator_version = 'v0.1.2'
 FORCE_PREFIX = False
 FORCE_META = False
 USE_TMDB_ID_META = True
@@ -29,7 +29,8 @@ COMPATIBILITY_ID = ['tt', 'kitsu', 'mal']
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
 
 # Cache set
-meta_cache = Cache(maxsize=100000, ttl=timedelta(hours=12).total_seconds())
+#meta_cache = Cache(maxsize=100000, ttl=timedelta(hours=12).total_seconds())
+meta_cache = Cache('./cache/meta/tmp', timedelta(hours=12).total_seconds())
 meta_cache.clear()
 
 # Server start
@@ -156,9 +157,15 @@ async def get_catalog(response: Response, addon_url, type: str, user_settings: s
         if 'metas' in catalog:
             if type == 'anime':
                 await remove_duplicates(catalog)
-            tasks = [
-                tmdb.get_tmdb_data(client, item.get('imdb_id', item.get('id')), "imdb_id") for item in catalog['metas']
-            ]
+                tasks = [
+                    tmdb.get_tmdb_data(client, item.get('imdb_id', item.get('id')), "imdb_id")
+                    if item.get("animeType") == "TV" or item.get("animeType") == "movie" else asyncio.sleep(0, result={})
+                    for item in catalog['metas']
+                ]
+            else:
+                tasks = [
+                    tmdb.get_tmdb_data(client, item.get('imdb_id', item.get('id')), "imdb_id") for item in catalog['metas']
+                ]
             tmdb_details = await asyncio.gather(*tasks)
         else:
             return json_response({})
@@ -260,14 +267,18 @@ async def get_meta(request: Request,response: Response, addon_url, type: str, id
                 
             # Handle kitsu and mal ids
             elif 'kitsu' in id or 'mal' in id:
-                # Try convert kitsu to imdb
-                if 'kitsu' in id:
-                    imdb_id, is_converted = await kitsu.convert_to_imdb(id, type)
-                else:
-                    imdb_id, is_converted = await mal.convert_to_imdb(id.replace('_',':'), type)
+                # Get meta from kitsu addon
+                id = id.replace('_',':').replace(':','%3A')
+                response = await client.get(f"{kitsu.kitsu_addon_url}/meta/{type}/{id.replace(':','%3A')}.json")
+                meta = response.json()
 
+                # Extract imdb id, anime type and check convertion to imdb id
+                imdb_id = meta['meta'].get('imdb_id', None)
+                anime_type = meta['meta'].get('animeType', None)
+                is_converted = imdb_id != None and (anime_type == 'TV' or anime_type == 'movie')
+
+                # Handle converted ids (TV and movies)
                 if is_converted:
-
                     if USE_TMDB_ADDON:
                         tmdb_id = await tmdb.convert_imdb_to_tmdb(imdb_id)
                         # TMDB Addons retry
@@ -294,10 +305,25 @@ async def get_meta(request: Request,response: Response, addon_url, type: str, id
                         # Get meta from kitsu addon
                         response = await client.get(f"{kitsu.kitsu_addon_url}/meta/{type}/{id.replace(':','%3A')}.json")
                         meta = response.json()
+
+                # Handle not corverted and ONA OVA Specials
                 else:
-                    # Get meta from kitsu addon
-                    response = await client.get(f"{kitsu.kitsu_addon_url}/meta/{type}/{id.replace(':','%3A')}.json")
-                    meta = response.json()
+                    # Translate description
+                    tasks = []
+                    description = meta['meta'].get('description', '')
+                    if description != '':
+                        tasks.append(translator.translate_with_api(client, description))
+
+                    # Translate episodes
+                    if type == 'series':
+                        tasks.append(translator.translate_episodes_with_api(client, meta['meta']['videos']))
+                        translations = await asyncio.gather(*tasks)
+                        meta['meta']['videos'] = translations[1]
+                    else:
+                        translations = await asyncio.gather(*tasks)
+
+                    # Set translated description    
+                    meta['meta']['description'] = translations[0]
 
             # Not compatible id -> redirect to original addon
             else:
@@ -357,15 +383,22 @@ async def remove_duplicates(catalog) -> None:
     
     for item in catalog['metas']:
 
+        # Get imdb id and animetype from catalog data
+        anime_type = item.get('animeType', None)
         if 'kitsu' in item['id']:
-            item['imdb_id'], is_converted = await kitsu.convert_to_imdb(item['id'], item['type'])
-
+            imdb_id, is_converted = await kitsu.convert_to_imdb(item['id'], item['type'])
         elif 'mal_' in item['id']:
-            item['imdb_id'], is_converted = await mal.convert_to_imdb(item['id'].replace('_',':'), item['type'])
+            imdb_id, is_converted = await mal.convert_to_imdb(item['id'].replace('_',':'), item['type'])
+        item['imdb_id'] = imdb_id
 
-        if item['imdb_id'] not in seen_ids:
+        # Add special, ona, ova, movies
+        if imdb_id == None or anime_type != 'TV':
             unique_items.append(item)
-            seen_ids.add(item['imdb_id'])
+
+        # Incorporate seasons
+        elif imdb_id not in seen_ids:
+            unique_items.append(item)
+            seen_ids.add(imdb_id)
 
     catalog['metas'] = unique_items
 

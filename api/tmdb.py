@@ -12,7 +12,8 @@ TMDB_BACK_URL = 'https://image.tmdb.org/t/p/original'
 TMDB_API_KEY = os.getenv('TMDB_API_KEY')
 
 # Cache set
-tmp_cache = Cache(maxsize=100000, ttl=timedelta(days=7).total_seconds())
+#tmp_cache = Cache(maxsize=100000, ttl=timedelta(days=7).total_seconds())
+tmp_cache = Cache('./cache/tmdb/tmp', timedelta(days=7).total_seconds())
 tmp_cache.clear()
 
 

@@ -27,7 +27,7 @@ const compatibilityList = [
     "org.imdbcatalogs.rpdb",            // IMDB Catalogs (with ratings)
     "pw.ers.rottentomatoes",            // Rotten Tomatoes Catalogs
     "com.mdblist.",                     // MDBLists Catalogs
-    "com.sagetendo.mal-stremio-addon",  // MAL Addon
+    //"com.sagetendo.mal-stremio-addon",  // MAL Addon
     "dev.filmwhisper."                  // AI Film Whisper
 ]
 

@@ -6,8 +6,10 @@ import anime.anime_mapping as anime_mapping
 kitsu_addon_url = 'https://anime-kitsu.strem.fun'
 
 # Cache load
-kitsu_cache = Cache(maxsize=float('inf'), ttl=timedelta(days=30).total_seconds())
-kitsu_cache.clear()
+kitsu_cache_ids = Cache('./cache/kitsu/ids', timedelta(days=30).total_seconds())
+kitsu_cache_specials = Cache('./cache/kitsu/specials')
+kitsu_cache_ids.clear()
+kitsu_cache_specials.clear()
 
 # Anime mapping loading
 imdb_ids_map = None
@@ -18,24 +20,24 @@ def load_anime_map():
 	# Load kitsu -> imdb converter
 	imdb_map = anime_mapping.load_kitsu_map()
 	for kitsu_id, imdb_id in imdb_map.items():
-		kitsu_cache.set(f"kitsu:{kitsu_id}", imdb_id)
+		kitsu_cache_ids.set(f"kitsu:{kitsu_id}", imdb_id)
 
 	# Load season / episode map
 	imdb_ids_map = anime_mapping.load_imdb_map()
 
 async def convert_to_imdb(kitsu_id: str, type: str):
 	is_converted = False
-	imdb_id = kitsu_cache.get(kitsu_id)
+	imdb_id = kitsu_cache_ids.get(kitsu_id)
 	if imdb_id == None:
 		async with httpx.AsyncClient(follow_redirects=True, timeout=20) as client:
 			response = await client.get(f"{kitsu_addon_url}/meta/{type}/{kitsu_id.replace(':','%3A')}.json")
 			try:
 				imdb_id = response.json()['meta']['imdb_id']
-				kitsu_cache.set(kitsu_id, imdb_id)
+				kitsu_cache_ids.set(kitsu_id, imdb_id)
 				is_converted = True
 			except:
 				# If imdb_id not found save kitsu_id as imdb_id (better performance)
-				kitsu_cache.set(kitsu_id, kitsu_id)
+				kitsu_cache_ids.set(kitsu_id, kitsu_id)
 				return kitsu_id, is_converted
 	else:
 		if 'tt' not in imdb_id:

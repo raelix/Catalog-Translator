@@ -1,22 +1,24 @@
 from cache import Cache
 import api.tmdb as tmdb
+import urllib.parse
 import asyncio
 import httpx
 import os
 
 # Cache set
-translations_cache = Cache(maxsize=float('inf'), ttl=float('inf'))
+#translations_cache = Cache(maxsize=float('inf'), ttl=float('inf'))
+translations_cache = Cache('./cache/translation/tmp')
 translations_cache.clear()
 
 # Poster ratings
-RATINGS_SERVER = os.getenv('TR_SERVER', 'https://toastflix-tr-test.hf.space')
+RATINGS_SERVER = os.getenv('TR_SERVER', 'https://ca6771aaa821-toast-ratings.baby-beamup.club')
 
 
 async def translate_with_api(client: httpx.AsyncClient, text: str, source='en', target='it') -> str:
 
     translation = translations_cache.get(text)
-    if translation == None:
-        api_url = f"https://lingva-translate-azure.vercel.app/api/v1/{source}/{target}/{text}"
+    if translation == None and text != None:
+        api_url = f"https://lingva-translate-azure.vercel.app/api/v1/{source}/{target}/{urllib.parse.quote(text)}"
 
         response = await client.get(api_url)
         translated_text = response.json().get('translation', '')
@@ -62,6 +64,21 @@ def translate_catalog(original: dict, tmdb_meta: dict, skip_poster, toast_rating
 
 
     return new_catalog
+
+async def translate_episodes_with_api(client: httpx.AsyncClient, episodes: list[dict]):
+    tasks = []
+
+    for episode in episodes:
+        tasks.append(translate_with_api(client, episode['title']))
+        tasks.append(translate_with_api(client, episode['overview']))
+
+    translations = await asyncio.gather(*tasks)
+
+    for i, episode in enumerate(episodes):
+        episode['title'] = translations[2 * i]
+        episode['overview'] = translations[2 * i + 1]
+
+    return episodes
 
 
 async def translate_episodes(client: httpx.AsyncClient, original_episodes: list[dict]):

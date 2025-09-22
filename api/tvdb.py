@@ -16,7 +16,8 @@ IMAGE_URL = "https://thetvdb.com"
 EPISODE_PAGE = 500
 
 # Cache set
-token_cache = Cache(maxsize=1, ttl=timedelta(days=29).total_seconds())
+#token_cache = Cache(maxsize=1, ttl=timedelta(days=29).total_seconds())
+token_cache = Cache('./cache/tvdb/token', timedelta(days=29).total_seconds())
 token_cache.clear()
 
 # Too many requests retry
