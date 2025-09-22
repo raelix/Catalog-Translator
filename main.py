@@ -273,7 +273,11 @@ async def get_meta(request: Request,response: Response, addon_url, type: str, id
                 meta = response.json()
 
                 # Extract imdb id, anime type and check convertion to imdb id
-                imdb_id = meta['meta'].get('imdb_id', None)
+                if 'kitsu' in meta['meta']['id']:
+                    imdb_id, is_converted = await kitsu.convert_to_imdb(meta['meta']['id'], meta['meta']['type'])
+                elif 'mal_' in meta['meta']['id']:
+                    imdb_id, is_converted = await mal.convert_to_imdb(meta['meta']['id'].replace('_',':'), meta['meta']['type'])
+                meta['meta']['imdb_id'] = imdb_id
                 anime_type = meta['meta'].get('animeType', None)
                 is_converted = imdb_id != None and (anime_type == 'TV' or anime_type == 'movie')
 

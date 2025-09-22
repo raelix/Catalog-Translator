@@ -7,9 +7,7 @@ kitsu_addon_url = 'https://anime-kitsu.strem.fun'
 
 # Cache load
 kitsu_cache_ids = Cache('./cache/kitsu/ids', timedelta(days=30).total_seconds())
-kitsu_cache_specials = Cache('./cache/kitsu/specials')
 kitsu_cache_ids.clear()
-kitsu_cache_specials.clear()
 
 # Anime mapping loading
 imdb_ids_map = None
