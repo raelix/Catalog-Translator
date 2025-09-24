@@ -17,7 +17,7 @@ import base64
 import os
 
 # Settings
-translator_version = 'v0.1.2'
+translator_version = 'v0.1.3'
 FORCE_PREFIX = False
 FORCE_META = False
 USE_TMDB_ID_META = True
@@ -312,22 +312,25 @@ async def get_meta(request: Request,response: Response, addon_url, type: str, id
 
                 # Handle not corverted and ONA OVA Specials
                 else:
-                    # Translate description
                     tasks = []
                     description = meta['meta'].get('description', '')
-                    if description != '':
+                    videos = meta['meta'].get('videos', [])
+
+                    if description:
                         tasks.append(translator.translate_with_api(client, description))
 
-                    # Translate episodes
-                    if type == 'series':
-                        tasks.append(translator.translate_episodes_with_api(client, meta['meta']['videos']))
-                        translations = await asyncio.gather(*tasks)
-                        meta['meta']['videos'] = translations[1]
-                    else:
-                        translations = await asyncio.gather(*tasks)
+                    if type == 'series' and videos:
+                        tasks.append(translator.translate_episodes_with_api(client, videos))
 
-                    # Set translated description    
-                    meta['meta']['description'] = translations[0]
+                    translations = await asyncio.gather(*tasks)
+
+                    idx = 0
+                    if description:
+                        meta['meta']['description'] = translations[idx]
+                        idx += 1
+
+                    if type == 'series' and videos:
+                        meta['meta']['videos'] = translations[idx]
 
             # Not compatible id -> redirect to original addon
             else:

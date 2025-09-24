@@ -24,8 +24,10 @@ async def build_metadata(id: str, type: str):
         tmdb_id = await tmdb.convert_imdb_to_tmdb(id)
     if 'tmdb:' in id: 
         tmdb_id = id.replace('tmdb:', '')
-    elif 'tmdb:' in tmdb_id:
+    elif tmdb_id != None and 'tmdb:' in tmdb_id:
         tmdb_id = tmdb_id.replace('tmdb:', '')
+    else:
+        return {"meta": {}}
 
     async with httpx.AsyncClient(follow_redirects=True, timeout=REQUEST_TIMEOUT) as client:
 
