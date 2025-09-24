@@ -51,11 +51,17 @@ async def build_metadata(id: str, type: str):
         
         tasks.append(client.get(f"https://v3-cinemeta.strem.io/meta/{type}/{id}.json"))
         data = await asyncio.gather(*tasks)
-        tmdb_data, fanart_data, cinemeta_data = data[0], data[1], data[2].json()
+        tmdb_data, fanart_data = data[0], data[1]
+        if data[2].status_code == 200:
+            cinemeta_data = data[2].json()
+        else:
+            cinemeta_data = {'meta': {}}
         if len(tmdb_data) == 0:
             return {"meta": {}}
         
         title = tmdb_data.get(parse_title, '')
+        poster_path = tmdb_data.get('poster_path', '')
+        backdrop_path = tmdb_data.get('backdrop_path', '')
         slug = f"{type}/{title.lower().replace(' ', '-')}-{tmdb_data.get('imdb_id', '').replace('tt', '')}"
         logo = extract_logo(fanart_data, tmdb_data)
         directors, writers= extract_crew(tmdb_data)
@@ -63,7 +69,7 @@ async def build_metadata(id: str, type: str):
         genres = extract_genres(tmdb_data)
         year = extract_year(tmdb_data, type)
         trailers = extract_trailers(tmdb_data)
-        rating = cinemeta_data.get('meta', {}).get('imdbRating', None) #f"{tmdb_data.get('vote_average', 0):.1f}" if tmdb_data.get('vote_average') else ''
+        rating = cinemeta_data.get('meta', {}).get('imdbRating', None)
 
         meta = {
             "meta": {
@@ -71,7 +77,7 @@ async def build_metadata(id: str, type: str):
                 "name": title,
                 "type": type,
                 "cast": cast,
-                "country": tmdb_data.get('origin_country', [''])[0],
+                "country": (tmdb_data.get('origin_country') or [''])[0],
                 "description": tmdb_data.get('overview', ''),
                 "director": directors,
                 "genre": genres,
@@ -80,8 +86,8 @@ async def build_metadata(id: str, type: str):
                 "slug": slug,
                 "writer": writers,
                 "year": year,
-                "poster": tmdb.TMDB_POSTER_URL + tmdb_data.get('poster_path', ''),
-                "background": tmdb.TMDB_BACK_URL + tmdb_data.get('backdrop_path', ''),
+                "poster": tmdb.TMDB_POSTER_URL + poster_path if poster_path else None,
+                "background": tmdb.TMDB_BACK_URL + backdrop_path if backdrop_path else None,
                 "logo": logo,
                 "runtime": str(tmdb_data.get('runtime','')) + ' min' if type == 'movie' else extract_series_episode_runtime(tmdb_data),
                 "id": 'tmdb:' + str(tmdb_data.get('id', '')),
@@ -182,7 +188,7 @@ def extract_series_episode_runtime(tmdb_data: dict) -> str:
     if len(tmdb_data.get('episode_run_time', [])) > 0:
         runtime = tmdb_data['episode_run_time'][0]
     else:
-        runtime = tmdb_data.get('last_episode_to_air').get('runtime','N/A')
+        runtime = (tmdb_data.get('last_episode_to_air') or {}).get('runtime', 'N/A')
 
     return str(runtime) + ' min'
 

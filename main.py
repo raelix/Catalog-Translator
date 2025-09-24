@@ -216,7 +216,10 @@ async def get_meta(request: Request,response: Response, addon_url, type: str, id
                 else:
                     tmdb_meta = metas[0]
 
-                cinemeta_meta = metas[1].json()
+                if metas[1].status_code == 200:
+                    cinemeta_meta = metas[1].json()
+                else:
+                    cinemeta_meta = {}
                 
                 # Not empty tmdb meta
                 if len(tmdb_meta.get('meta', [])) > 0:
