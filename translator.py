@@ -17,7 +17,7 @@ RATINGS_SERVER = os.getenv('TR_SERVER', 'https://ca6771aaa821-toast-ratings.baby
 async def translate_with_api(client: httpx.AsyncClient, text: str, source='en', target='it') -> str:
 
     translation = translations_cache.get(text)
-    if translation == None and text != None:
+    if translation == None and text != None and text != '':
         api_url = f"https://lingva-translate-azure.vercel.app/api/v1/{source}/{target}/{urllib.parse.quote(text)}"
 
         response = await client.get(api_url)
@@ -65,12 +65,13 @@ def translate_catalog(original: dict, tmdb_meta: dict, skip_poster, toast_rating
 
     return new_catalog
 
+
 async def translate_episodes_with_api(client: httpx.AsyncClient, episodes: list[dict]):
     tasks = []
 
     for episode in episodes:
-        tasks.append(translate_with_api(client, episode['title']))
-        tasks.append(translate_with_api(client, episode['overview']))
+        tasks.append(translate_with_api(client, episode.get('title', ''))),
+        tasks.append(translate_with_api(client, episode.get('overview', '')))
 
     translations = await asyncio.gather(*tasks)
 

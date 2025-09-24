@@ -12,6 +12,7 @@ import json
 REQUEST_TIMEOUT = 100
 MAX_CAST_SEARCH = 3
 TMDB_ERROR_EPISODE_OFFSET = 50
+MAX_TRANSLATE_EPISODES = 20
 
 # Load TMDB exceptions
 with open("anime/tmdb_exceptions.json", "r", encoding="utf-8") as f:
@@ -45,9 +46,10 @@ async def build_metadata(id: str, type: str):
                 tmdb.get_series_details(client, tmdb_id),
                 fanart.get_fanart_series(client, tmdb_id)
             ]
-            
+        
+        tasks.append(client.get(f"https://v3-cinemeta.strem.io/meta/{type}/{id}.json"))
         data = await asyncio.gather(*tasks)
-        tmdb_data, fanart_data = data[0], data[1]
+        tmdb_data, fanart_data, cinemeta_data = data[0], data[1], data[2].json()
         if len(tmdb_data) == 0:
             return {"meta": {}}
         
@@ -59,7 +61,7 @@ async def build_metadata(id: str, type: str):
         genres = extract_genres(tmdb_data)
         year = extract_year(tmdb_data, type)
         trailers = extract_trailers(tmdb_data)
-        rating = f"{tmdb_data.get('vote_average', 0):.1f}" if tmdb_data.get('vote_average') else ''
+        rating = cinemeta_data.get('meta', {}).get('imdbRating', None) #f"{tmdb_data.get('vote_average', 0):.1f}" if tmdb_data.get('vote_average') else ''
 
         meta = {
             "meta": {
@@ -125,6 +127,7 @@ async def series_build_episodes(client: httpx.AsyncClient, imdb_id: str, tmdb_id
             translated_episodes.extend(result['data']['episodes'])
         
         # Build episodes meta
+        not_fully_translated_counter = 0
         for episode in translated_episodes:
             video = {
                 "name": f"Episodio {episode['number']}" if episode['name'] == None else episode['name'],
@@ -141,10 +144,12 @@ async def series_build_episodes(client: httpx.AsyncClient, imdb_id: str, tmdb_id
             }
 
             # Insert not fully translated episode to try translate it with TMDB
-            if episode['seasonNumber'] != 0 and (episode['name'] == None or episode['overview'] == None):
+            if episode['seasonNumber'] != 0 and (episode['name'] == None or episode['overview'] == None) and not_fully_translated_counter < MAX_TRANSLATE_EPISODES:
                 video['tvdb_id'] = episode['id']
+                not_fully_translated_counter += 1
             
             videos.append(video)
+
         return await translator.translate_episodes(client, videos)
 
 
