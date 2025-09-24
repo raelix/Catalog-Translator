@@ -69,7 +69,7 @@ async def build_metadata(id: str, type: str):
         genres = extract_genres(tmdb_data)
         year = extract_year(tmdb_data, type)
         trailers = extract_trailers(tmdb_data)
-        rating = cinemeta_data.get('meta', {}).get('imdbRating', None)
+        rating = cinemeta_data.get('meta', {}).get('imdbRating', '')
 
         meta = {
             "meta": {
