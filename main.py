@@ -271,7 +271,7 @@ async def get_meta(request: Request,response: Response, addon_url, type: str, id
             # Handle kitsu and mal ids
             elif 'kitsu' in id or 'mal' in id:
                 # Get meta from kitsu addon
-                id = id.replace('_',':').replace(':','%3A')
+                id = id.replace('_',':')
                 response = await client.get(f"{kitsu.kitsu_addon_url}/meta/{type}/{id.replace(':','%3A')}.json")
                 meta = response.json()
 

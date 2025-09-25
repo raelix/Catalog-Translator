@@ -40,5 +40,17 @@
         "kitsu_id": 45515,
         "type": "ONA",
         "anidb_id": -6
+    },
+    {
+        "livechart_id": 9232,
+        "thetvdb_id": 348545,
+        "imdb_id": "tt14888860",
+        "anisearch_id": 14215,
+        "themoviedb_id": 85937,
+        "anidb_id": 14689,
+        "kitsu_id": 44388,
+        "type": "MOVIE",
+        "animecountdown_id": 1043309,
+        "simkl_id": 1043309
     }
 ]
