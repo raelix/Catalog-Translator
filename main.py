@@ -138,17 +138,17 @@ async def get_manifest(addon_url):
 
 @app.get("/{addon_url}/{user_settings}/catalog/{type}/{path:path}")
 async def get_catalog(response: Response, addon_url, type: str, user_settings: str, path: str):
-    # Cinemeta last-videos
- 
-    if 'last-videos' in path or 'calendar-videos' in path:
-        return RedirectResponse(f"{cinemeta_url}/catalog/{type}/{path}")
-
+    
     user_settings = parse_user_settings(user_settings)
     addon_url = decode_base64_url(addon_url)
 
     async with httpx.AsyncClient(follow_redirects=True, timeout=REQUEST_TIMEOUT) as client:
         response = await client.get(f"{addon_url}/catalog/{type}/{path}")
 
+        # Cinemeta last-videos and calendar
+        if 'last-videos' in path or 'calendar-videos' in path:
+            return json_response(response.json())
+        
         try:
             catalog = response.json()
         except:
