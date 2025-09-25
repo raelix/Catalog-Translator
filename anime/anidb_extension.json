@@ -46,5 +46,13 @@
         "kitsu": 45515,
         "tvdb_season": 2,
         "tvdb_epoffset": 0
+    },
+    "-7": {
+        "_comment": "Attack on Titan: The Final Season - Final Chapters Part 2",
+        "tvdb_id": 267440,
+        "imdb_id": "tt2560140",
+        "kitsu": 47132,
+        "tvdb_season": 4,
+        "tvdb_epoffset": 29
     }
 }

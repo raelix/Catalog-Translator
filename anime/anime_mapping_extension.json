@@ -42,6 +42,7 @@
         "anidb_id": -6
     },
     {
+        "_comment": "Kimetsu no Yaiba: Kyoudai no Kizuna",
         "livechart_id": 9232,
         "thetvdb_id": 348545,
         "imdb_id": "tt14888860",
@@ -52,5 +53,12 @@
         "type": "MOVIE",
         "animecountdown_id": 1043309,
         "simkl_id": 1043309
+    },
+    {
+        "_comment": "Attack on Titan: The Final Season - Final Chapters Part 2",
+        "imdb_id": "tt2560140",
+        "kitsu_id": 47132,
+        "type": "SPECIAL",
+        "anidb_id": -7
     }
 ]

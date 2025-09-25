@@ -151,7 +151,7 @@ if __name__ == '__main__':
     anidb_map = load_anidb_map()
     print(len(imdb_map))
 
-    titans = imdb_map['tt0168366']
+    titans = imdb_map['tt2560140']
     #print(anidb_map["9541"])
     print(titans)
     """

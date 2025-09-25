@@ -137,26 +137,27 @@ async def series_build_episodes(client: httpx.AsyncClient, imdb_id: str, tmdb_id
         # Build episodes meta
         not_fully_translated_counter = 0
         for episode in translated_episodes:
-            video = {
-                "name": f"Episodio {episode['number']}" if episode['name'] == None else episode['name'],
-                "season": episode['seasonNumber'],
-                "number": episode['number'],
-                "firstAired": episode['aired'] + 'T05:00:00.000Z' if episode['aired'] is not None else None,
-                "rating": "0",
-                "overview": '' if episode['overview'] == None else episode['overview'],
-                "thumbnail": tvdb.IMAGE_URL + episode['image'] if episode['image'] != None else None,
-                "id": f"{imdb_id}:{episode['seasonNumber']}:{episode['number']}",
-                "released": episode['aired'] + 'T05:00:00.000Z' if episode['aired'] is not None else None,
-                "episode": episode['number'],
-                "description": ''
-            }
+            if episode['seasonNumber'] != 0: # Not for specials
+                video = {
+                    "name": f"Episodio {episode['number']}" if episode['name'] == None else episode['name'],
+                    "season": episode['seasonNumber'],
+                    "number": episode['number'],
+                    "firstAired": episode['aired'] + 'T05:00:00.000Z' if episode['aired'] is not None else None,
+                    "rating": "0",
+                    "overview": '' if episode['overview'] == None else episode['overview'],
+                    "thumbnail": tvdb.IMAGE_URL + episode['image'] if episode['image'] != None else None,
+                    "id": f"{imdb_id}:{episode['seasonNumber']}:{episode['number']}",
+                    "released": episode['aired'] + 'T05:00:00.000Z' if episode['aired'] is not None else None,
+                    "episode": episode['number'],
+                    "description": ''
+                }
 
-            # Insert not fully translated episode to try translate it with TMDB
-            if episode['seasonNumber'] != 0 and (episode['name'] == None or episode['overview'] == None) and not_fully_translated_counter < MAX_TRANSLATE_EPISODES:
-                video['tvdb_id'] = episode['id']
-                not_fully_translated_counter += 1
-            
-            videos.append(video)
+                # Insert not fully translated episode to try translate it with TMDB
+                if episode['seasonNumber'] != 0 and (episode['name'] == None or episode['overview'] == None) and not_fully_translated_counter < MAX_TRANSLATE_EPISODES:
+                    video['tvdb_id'] = episode['id']
+                    not_fully_translated_counter += 1
+                
+                videos.append(video)
 
         return await translator.translate_episodes(client, videos)
 
