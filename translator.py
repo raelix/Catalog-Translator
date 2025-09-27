@@ -62,7 +62,6 @@ def translate_catalog(original: dict, tmdb_meta: dict, skip_poster, toast_rating
                 except Exception as e: 
                     print(e)
 
-
     return new_catalog
 
 

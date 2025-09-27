@@ -63,7 +63,7 @@ async def build_metadata(id: str, type: str):
         poster_path = tmdb_data.get('poster_path', '')
         backdrop_path = tmdb_data.get('backdrop_path', '')
         slug = f"{type}/{title.lower().replace(' ', '-')}-{tmdb_data.get('imdb_id', '').replace('tt', '')}"
-        logo = extract_logo(fanart_data, tmdb_data)
+        logo = extract_logo(fanart_data, tmdb_data, cinemeta_data)
         directors, writers= extract_crew(tmdb_data)
         cast = extract_cast(tmdb_data)
         genres = extract_genres(tmdb_data)
@@ -194,7 +194,7 @@ def extract_series_episode_runtime(tmdb_data: dict) -> str:
     return str(runtime) + ' min'
 
 
-def extract_logo(fanart_data: dict, tmdb_data: dict) -> str:
+def extract_logo(fanart_data: dict, tmdb_data: dict, cinemeta_data: dict) -> str:
     # Try TMDB logo
     if len(tmdb_data.get('images', {}).get('logos', [])) > 0:
         return tmdb.TMDB_POSTER_URL + tmdb_data['images']['logos'][0]['file_path']
@@ -215,7 +215,11 @@ def extract_logo(fanart_data: dict, tmdb_data: dict) -> str:
         elif logo['lang'] == 'it':
             return logo['url']
         
-    return en_logo
+    # Cinemeta
+    if not en_logo:
+        return cinemeta_data.get('meta', {}).get('logo')
+    else:
+        return en_logo
 
 
 def extract_cast(tmdb_data: dict):
