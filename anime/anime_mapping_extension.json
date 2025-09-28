@@ -60,5 +60,11 @@
         "kitsu_id": 47132,
         "type": "SPECIAL",
         "anidb_id": -7
+    },
+    {
+        "_comment": "Haikyu!! Battaglia all'ultimo rifiuto",
+        "imdb_id": "tt30476486",
+        "kitsu_id": 46336,
+        "type": "MOVIE"
     }
 ]
