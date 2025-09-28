@@ -28,7 +28,8 @@ const compatibilityList = [
     "pw.ers.rottentomatoes",            // Rotten Tomatoes Catalogs
     "com.mdblist.",                     // MDBLists Catalogs
     //"com.sagetendo.mal-stremio-addon",  // MAL Addon
-    "dev.filmwhisper."                  // AI Film Whisper
+    "dev.filmwhisper.",                 // AI Film Whisper
+    "community.anime.kitsu.search"      //Kitsu search addon
 ]
 
 
