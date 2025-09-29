@@ -66,5 +66,137 @@
         "imdb_id": "tt30476486",
         "kitsu_id": 46336,
         "type": "MOVIE"
+    },
+    {
+        "_comment": "Aim for the Ace! (1979)",
+        "imdb_id": "tt7523106",
+        "kitsu_id": 283,
+        "type": "MOVIE"
+    },
+    {
+        "_comment": "Aooni the Movie",
+        "imdb_id": "tt6531060",
+        "kitsu_id": 12478,
+        "type": "MOVIE"
+    },
+    {
+        "_comment": "Chibi Maruko-chan: Watashi no Suki na Uta",
+        "imdb_id": "tt6882528",
+        "kitsu_id": 5695,
+        "type": "MOVIE"
+    },
+    {
+        "_comment": "Digimon Savers 3D: Digital World Kiki Ippatsu!",
+        "imdb_id": "tt5328606",
+        "kitsu_id": 5356,
+        "type": "MOVIE"
+    },
+    {
+        "_comment": "Death Billiards",
+        "imdb_id": "tt2807626",
+        "kitsu_id": 7116,
+        "type": "MOVIE"
+    },
+    {
+        "_comment": "Dr. Slump: \"Hoyoyo!\" Space Adventure",
+        "imdb_id": "tt1189033",
+        "kitsu_id": 5382,
+        "type": "MOVIE"
+    },
+    {
+        "_comment": "Saiyuki: Requiem",
+        "imdb_id": "tt0877335",
+        "kitsu_id": 445,
+        "type": "MOVIE"
+    },
+    {
+        "_comment": "Night on the Galactic Railroad",
+        "imdb_id": "tt0089206",
+        "kitsu_id": 1294,
+        "type": "MOVIE"
+    },
+    {
+        "_comment": "Hetalia Axis Powers: Paint it",
+        "imdb_id": "tt2653882",
+        "kitsu_id": 4946,
+        "type": "MOVIE"
+    },
+    {
+        "_comment": "High School Fleet Movie",
+        "imdb_id": "tt11639420",
+        "kitsu_id": 41259,
+        "type": "MOVIE"
+    },
+    {
+        "_comment": "JoJo's Bizarre Adventure: Phantom Blood",
+        "imdb_id": "tt6490990",
+        "kitsu_id": 3136,
+        "type": "MOVIE"
+    },
+    {
+        "_comment": "Marmalade Boy Movie",
+        "imdb_id": "tt3914084",
+        "kitsu_id": 479,
+        "type": "MOVIE"
+    },
+    {
+        "_comment": "Orange: Mirai",
+        "imdb_id": "tt6096128",
+        "kitsu_id": 12565,
+        "type": "MOVIE"
+    },
+    {
+        "_comment": "Pokemon 3D Adventure: Find Mew!",
+        "imdb_id": "tt3433608",
+        "kitsu_id": 6441,
+        "type": "MOVIE"
+    },
+    {
+        "_comment": "Pokemon 4D: Pikachu's Ocean Adventure",
+        "imdb_id": "tt3435626",
+        "kitsu_id": 6438,
+        "type": "MOVIE"
+    },
+    {
+        "_comment": "The King's Avatar Movie",
+        "imdb_id": "tt10736726",
+        "kitsu_id": 42673,
+        "type": "MOVIE"
+    },
+    {
+        "_comment": "Saekano: How to Raise a Boring Girlfriend Fine",
+        "imdb_id": "tt11203468",
+        "kitsu_id": 14050,
+        "type": "MOVIE"
+    },
+    {
+        "_comment": "Sekaiichi Hatsukoi Movie: Yokozawa Takafumi no Baai",
+        "imdb_id": "tt3880898",
+        "kitsu_id": 8193,
+        "type": "MOVIE"
+    },
+    {
+        "_comment": "Street Fighter Alpha: The Movie",
+        "imdb_id": "tt0185708",
+        "kitsu_id": 869,
+        "type": "MOVIE"
+    },
+    {
+        "_comment": "Toshokan Sensou: Kakumei no Tsubasa",
+        "imdb_id": "tt2220674",
+        "kitsu_id": 6436,
+        "type": "MOVIE"
+    },
+    {
+        "_comment": "Top wo Nerae! & Top wo Nerae 2! Gattai Movie!!",
+        "imdb_id": "tt15739684",
+        "kitsu_id": 1721,
+        "type": "MOVIE"
+    },
+    {
+        "_comment": "Zoku Owarimonogatari",
+        "imdb_id": "tt9266104",
+        "kitsu_id": 14129,
+        "type": "MOVIE"
     }
 ]

@@ -3,3 +3,4 @@ __pycache__/
 Dockerfile
 backup.txt
 cache/
+test/
