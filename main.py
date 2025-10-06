@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, Response, Query
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
+from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from datetime import timedelta
@@ -14,10 +14,11 @@ import asyncio
 import httpx
 from api import tmdb
 import base64
+import json
 import os
 
 # Settings
-translator_version = 'v0.1.3'
+translator_version = 'v0.1.5'
 FORCE_PREFIX = False
 FORCE_META = False
 USE_TMDB_ID_META = True
@@ -28,10 +29,16 @@ COMPATIBILITY_ID = ['tt', 'kitsu', 'mal']
 # ENV file
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
 
+# Load languages
+with open("languages.json", "r", encoding="utf-8") as f:
+    LANGUAGES = json.load(f) 
+
 # Cache set
-#meta_cache = Cache(maxsize=100000, ttl=timedelta(hours=12).total_seconds())
-meta_cache = Cache('./cache/meta/tmp', timedelta(hours=12).total_seconds())
-meta_cache.clear()
+meta_cache = {}
+for language in LANGUAGES:
+    meta_cache[language] = Cache(f"./cache/{language}/meta/tmp",  timedelta(hours=12).total_seconds())
+    meta_cache[language].clear()
+
 
 # Server start
 @asynccontextmanager
@@ -81,6 +88,7 @@ def json_response(data):
 
 
 @app.get('/', response_class=HTMLResponse)
+@app.get('/configure', response_class=HTMLResponse)
 async def home(request: Request):
     response = templates.TemplateResponse("configure.html", {"request": request})
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -104,9 +112,17 @@ async def link_generator(request: Request):
     return response
 
 
+@app.get("/manifest.json")
+async def get_manifest():
+    with open("manifest.json", "r", encoding="utf-8") as f:
+        manifest = json.load(f)
+    return json_response(manifest)
+
+
 @app.get('/{addon_url}/{user_settings}/manifest.json')
-async def get_manifest(addon_url):
+async def get_manifest(addon_url, user_settings):
     addon_url = decode_base64_url(addon_url)
+    user_settings = parse_user_settings(user_settings)
     async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT) as client:
         response = await client.get(f"{addon_url}/manifest.json")
         manifest = response.json()
@@ -114,13 +130,13 @@ async def get_manifest(addon_url):
     is_translated = manifest.get('translated', False)
     if not is_translated:
         manifest['translated'] = True
-        manifest['t_language'] = 'it-IT'
-        manifest['name'] += ' 🇮🇹'
+        manifest['t_language'] = user_settings.get('language', 'it-IT')
+        manifest['name'] += f" {translator.LANGUAGE_FLAGS[user_settings.get('language', 'it-IT')]}"
 
         if 'description' in manifest:
-            manifest['description'] += f" | Tradotto da Toast Translator. {translator_version}"
+            manifest['description'] += f" | Translated by Toast Translator. {translator_version}"
         else:
-            manifest['description'] = f"Tradotto da Toast Translator. {translator_version}"
+            manifest['description'] = f"Translated by Toast Translator. {translator_version}"
     
     if FORCE_PREFIX:
         if 'idPrefixes' in manifest:
@@ -138,8 +154,9 @@ async def get_manifest(addon_url):
 
 @app.get("/{addon_url}/{user_settings}/catalog/{type}/{path:path}")
 async def get_catalog(response: Response, addon_url, type: str, user_settings: str, path: str):
-    
     user_settings = parse_user_settings(user_settings)
+    language = user_settings['language']
+    tmdb_key = user_settings['tmdb_key']
     addon_url = decode_base64_url(addon_url)
 
     async with httpx.AsyncClient(follow_redirects=True, timeout=REQUEST_TIMEOUT) as client:
@@ -159,32 +176,38 @@ async def get_catalog(response: Response, addon_url, type: str, user_settings: s
             if type == 'anime':
                 await remove_duplicates(catalog)
                 tasks = [
-                    tmdb.get_tmdb_data(client, item.get('imdb_id', item.get('id')), "imdb_id")
+                    tmdb.get_tmdb_data(client, item.get('imdb_id', item.get('id')), "imdb_id", language, tmdb_key)
                     if item.get("animeType") == "TV" or item.get("animeType") == "movie" else asyncio.sleep(0, result={})
                     for item in catalog['metas']
                 ]
             else:
                 tasks = [
-                    tmdb.get_tmdb_data(client, item.get('imdb_id', item.get('id')), "imdb_id") for item in catalog['metas']
+                    tmdb.get_tmdb_data(client, item.get('imdb_id', item.get('id')), "imdb_id", language, tmdb_key) for item in catalog['metas']
                 ]
             tmdb_details = await asyncio.gather(*tasks)
         else:
             return json_response({})
 
-    new_catalog = translator.translate_catalog(catalog, tmdb_details, user_settings['sp'], user_settings['tr'])
+    new_catalog = translator.translate_catalog(catalog, tmdb_details, user_settings['sp'], user_settings['tr'], language)
     return json_response(new_catalog)
 
 
 @app.get('/{addon_url}/{user_settings}/meta/{type}/{id}.json')
-async def get_meta(request: Request,response: Response, addon_url, type: str, id: str):
+async def get_meta(request: Request,response: Response, addon_url, user_settings: str, type: str, id: str):
+    global tmdb_addon_meta_url
+
     headers = dict(request.headers)
     del headers['host']
+
     addon_url = decode_base64_url(addon_url)
-    global tmdb_addon_meta_url
+    user_settings = parse_user_settings(user_settings)
+    language = user_settings['language']
+    tmdb_key = user_settings['tmdb_key']
+
     async with httpx.AsyncClient(follow_redirects=True, timeout=REQUEST_TIMEOUT) as client:
 
         # Get from cache
-        meta = meta_cache.get(id)
+        meta = meta_cache[language].get(id)
 
         # Return cached meta
         if meta != None:
@@ -194,9 +217,9 @@ async def get_meta(request: Request,response: Response, addon_url, type: str, id
         else:
             # Handle imdb ids
             if 'tt' in id:
-                tmdb_id = await tmdb.convert_imdb_to_tmdb(id)
+                tmdb_id = await tmdb.convert_imdb_to_tmdb(id, language, tmdb_key)
                 tasks = [
-                    client.get(f"{tmdb_addon_meta_url}/meta/{type}/{tmdb_id}.json") if USE_TMDB_ADDON else meta_builder.build_metadata(id, type),
+                    client.get(f"{tmdb_addon_meta_url}/meta/{type}/{tmdb_id}.json") if USE_TMDB_ADDON else meta_builder.build_metadata(id, type, language, tmdb_key),
                     client.get(f"{cinemeta_url}/meta/{type}/{id}.json")
                 ]
                 metas = await asyncio.gather(*tasks)
@@ -231,10 +254,10 @@ async def get_meta(request: Request,response: Response, addon_url, type: str, id
                         tmdb_description = tmdb_meta['meta'].get('description', '')
                         
                         if tmdb_description == '':
-                            tasks.append(translator.translate_with_api(client, meta['meta'].get('description', '')))
+                            tasks.append(translator.translate_with_api(client, meta['meta'].get('description', ''), language))
 
                         if type == 'series' and (len(meta['meta']['videos']) < len(merged_videos)):
-                            tasks.append(translator.translate_episodes(client, merged_videos))
+                            tasks.append(translator.translate_episodes(client, merged_videos, language, tmdb_key))
 
                         translated_tasks = await asyncio.gather(*tasks)
                         for task in translated_tasks:
@@ -253,14 +276,14 @@ async def get_meta(request: Request,response: Response, addon_url, type: str, id
                         
                         if type == 'series':
                             tasks = [
-                                translator.translate_with_api(client, description),
-                                translator.translate_episodes(client, meta['meta']['videos'])
+                                translator.translate_with_api(client, description, language, tmdb_key),
+                                translator.translate_episodes(client, meta['meta']['videos'], language, tmdb_key)
                             ]
                             description, episodes = await asyncio.gather(*tasks)
                             meta['meta']['videos'] = episodes
 
                         elif type == 'movie':
-                            description = await translator.translate_with_api(client, description)
+                            description = await translator.translate_with_api(client, description, language)
 
                         meta['meta']['description'] = description
                     
@@ -288,7 +311,7 @@ async def get_meta(request: Request,response: Response, addon_url, type: str, id
                 # Handle converted ids (TV and movies)
                 if is_converted:
                     if USE_TMDB_ADDON:
-                        tmdb_id = await tmdb.convert_imdb_to_tmdb(imdb_id)
+                        tmdb_id = await tmdb.convert_imdb_to_tmdb(imdb_id, language, tmdb_key)
                         # TMDB Addons retry
                         for retry in range(6):
                             response = await client.get(f"{tmdb_addon_meta_url}/meta/{type}/{tmdb_id}.json")
@@ -301,7 +324,7 @@ async def get_meta(request: Request,response: Response, addon_url, type: str, id
                                 tmdb_addon_meta_url = tmdb_addons_pool[(index + 1) % len(tmdb_addons_pool)]
                                 print(f"Switch to {tmdb_addon_meta_url}")
                     else:
-                        meta = await meta_builder.build_metadata(imdb_id, type)
+                        meta = await meta_builder.build_metadata(imdb_id, type, language, tmdb_key)
 
                     if len(meta['meta']) > 0:
                         if type == 'movie':
@@ -321,10 +344,10 @@ async def get_meta(request: Request,response: Response, addon_url, type: str, id
                     videos = meta['meta'].get('videos', [])
 
                     if description:
-                        tasks.append(translator.translate_with_api(client, description))
+                        tasks.append(translator.translate_with_api(client, description, language))
 
                     if type == 'series' and videos:
-                        tasks.append(translator.translate_episodes_with_api(client, videos))
+                        tasks.append(translator.translate_episodes_with_api(client, videos, language))
 
                     translations = await asyncio.gather(*tasks)
 
@@ -342,7 +365,7 @@ async def get_meta(request: Request,response: Response, addon_url, type: str, id
 
 
             meta['meta']['id'] = id
-            meta_cache.set(id, meta)
+            meta_cache[language].set(id, meta)
             return json_response(meta)
 
 
@@ -358,6 +381,7 @@ async def get_subs(addon_url, path: str):
     addon_url = decode_base64_url(addon_url)
     return RedirectResponse(f"{addon_url}/stream/{path}")
 
+
 # Anime map reloader
 @app.get('/map_reload')
 async def reload_anime_mapping(password: str = Query(...)):
@@ -368,6 +392,7 @@ async def reload_anime_mapping(password: str = Query(...)):
         return json_response({"status": "Anime map updated."})
     else:
         return json_response({"Error": "Access delined"})
+    
 
 # Cache expires
 @app.get('/clean_cache')
@@ -378,6 +403,13 @@ async def clean_cache(password: str = Query(...)):
         return json_response({"status": "Cache cleaned."})
     else:
         return json_response({"Error": "Access delined"})
+    
+    
+# Toast Translator Logo
+@app.get('/favicon.ico')
+@app.get('/addon-logo.png')
+async def get_poster_placeholder():
+    return FileResponse("static/img/toast-translator-logo.png", media_type="image/png")
 
 
 def decode_base64_url(encoded_url):

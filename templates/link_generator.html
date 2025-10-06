@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,12 +15,55 @@
             <span class="translator">Translator</span>
         </div>
 
-        <div class="add-group" style="display: flex;">
-            <input type="text" id="addon-url" placeholder="URL dell'addon da aggiungere">
-            <button type="add" onclick="loadAddon(document.getElementById('addon-url').value, true, 'generator')">+</button>
+        <!-- 🔑 TMDB API Key -->
+        <div class="login-group">
+            <label for="tmdb-key">🔑 TMDB API Key</label>
+            <input type="text" id="tmdb-key" placeholder="Enter your TMDB API key">
         </div>
 
+        <!-- 🌍 Language Selector -->
+        <div class="login-group">
+            <label for="language">🌍 Preferred Language</label>
+            <select id="language">
+                <option value="it-IT">🇮🇹 Italiano</option>
+                <option value="es-ES">🇪🇸 Español</option>
+                <option value="fr-FR">🇫🇷 Français</option>
+                <option value="de-DE">🇩🇪 Deutsch</option>
+                <option value="pt-PT">🇵🇹 Português</option>
+                <option value="pt-BR">🇧🇷 Português (Brasil)</option>
+                <option value="ru-RU">🇷🇺 Русский</option>
+                <option value="ja-JP">🇯🇵 日本語</option>
+                <option value="zh-CN">🇨🇳 中文</option>
+                <option value="ko-KR">🇰🇷 한국어</option>
+                <option value="ar-SA">🇸🇦 العربية</option>
+                <option value="hi-IN">🇮🇳 हिन्दी</option>
+            </select>
+        </div>
+
+        <!-- 🧩 Addon URL Loader -->
+        <div class="login-group">
+            <label for="addon-url">🧩 Add Addon from URL</label>
+            <div class="add-group" style="display: flex;">
+                <input type="text" id="addon-url" placeholder="Enter the addon URL">
+                <button type="add" onclick="loadAddon(document.getElementById('addon-url').value, true, 'generator')">+</button>
+            </div>
+        </div>
+        
         <div id="addons-container"></div>
     </div>
+
+    <script>
+        // ✅ Retrieve TMDB Key and selected language
+        function getTMDBSettings() {
+            const apiKey = document.getElementById('tmdb-key').value.trim();
+            const language = document.getElementById('language').value;
+            if (!apiKey || !language) {
+                alert('Please enter your TMDB API key and select a language!');
+                return;
+            }
+            console.log('TMDB API Key:', apiKey);
+            console.log('Selected language:', language);
+        }
+    </script>
 </body>
 </html>

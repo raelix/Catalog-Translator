@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Toast Translator</title>
     <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/utils.js"></script>
     <script src="/static/stremio.js"></script>
     <script src="/static/addonCard.js"></script>
     <script src="/static/installer.js"></script>
@@ -16,42 +17,68 @@
             <span class="toast">Toast</span>
             <span class="translator">Translator</span>
         </div>
+
         <div class="description" id="desc-head">
-            <h2>Un traduttore di cataloghi Stremio in italiano 🇮🇹✨</p>
+            <h2>A Stremio catalog translator ✨</h2>
 
-            <h2>📚 Cataloghi compatibili:</h2>
-            <ul>
-                <li>🎬 Cinemeta</li>
-                <li>🏛️ Public Domains</li>
-                <li>📺 Streaming Catalogs</li>
-                <li>🎥 IMDB Catalogs</li>
-                <li>🍅 Rotten Tomatoes Catalogs</li>
-                <li>📊 MDBLists Catalogs</li>
-                <li>🎭 Trakt</li>
-                <li>🍣 Anime Kitsu</li>
-                <li>🍜 Anime Catalogs</li>
+            <h2>📚 Compatible catalogs:</h2>
+            <ul class="addon-list">
+                <li>🎬 <a href="stremio://v3-cinemeta.strem.io/manifest.json" target="_blank" rel="noopener">Cinemeta</a></li>
+                <li>🏛️ <a href="stremio://caching.stremio.net/manifest.json" target="_blank" rel="noopener">Public Domains</a></li>
+                <li>📺 <a href="https://7a82163c306e-stremio-netflix-catalog-addon.baby-beamup.club/configure" target="_blank" rel="noopener">Streaming Catalogs</a></li>
+                <li>🎥 <a href="https://1fe84bc728af-imdb-catalogs.baby-beamup.club/manifest.json" target="_blank" rel="noopener">IMDB Catalogs</a></li>
+                <li>🍅 <a href="https://7a82163c306e-rottentomatoes.baby-beamup.club/manifest.json" target="_blank" rel="noopener">Rotten Tomatoes Catalogs</a></li>
+                <li>📊 <a href="https://1fe84bc728af-stremio-mdblist.baby-beamup.club/configure" target="_blank" rel="noopener">MDBLists Catalogs</a></li>
+                <li>🎭 <a href="https://trakt.dexter21767.com/configure/" target="_blank" rel="noopener">Trakt</a></li>
+                <li>🍣 <a href="stremio://anime-kitsu.strem.fun/manifest.json" target="_blank" rel="noopener">Anime Kitsu</a></li>
+                <li>🍜 <a href="https://1fe84bc728af-stremio-anime-catalogs.baby-beamup.club/configure" target="_blank" rel="noopener">Anime Catalogs</a></li>
             </ul>
 
-            <h2>🔧 Come tradurre:</h2>
+            <h2>🔧 How to translate:</h2>
             <ul>
-                <li>📥 Installare il catalogo originale (es. Cinemeta)</li>
-                <li>🔑 Fare il login nella pagina di configurazione</li>
-                <li>✅ Selezionare i cataloghi che si vogliono tradurre</li>
-                <li>🎉 Clicca su Applica ed il gioco è fatto!</li>
+                <li>📥 Install the original catalog (e.g., Cinemeta)</li>
+                <li>🔑 Log in on the configuration page</li>
+                <li>✅ Select the catalogs you want to translate</li>
+                <li>🎉 Click Apply and you're done!</li>
             </ul>
 
-            <h2>❓ Chiarimenti configurazione:</h2>
+            <h2>❓ Configuration clarifications:</h2>
             <ul>
-                <li>🖼️ <strong>Skip poster</strong> → serve se il catalogo originale supporta poster RPDB</li>
-                <li>⭐ <strong>Toast Ratings</strong> → poster con valutazioni interne</li>
+                <li>🖼️ <strong>Skip poster</strong> → needed if the original catalog supports RPDB posters</li>
+                <li>⭐ <strong>Toast Ratings</strong> → posters with ratings</li>
             </ul>
         </div>
 
-        <div class="add-group" hidden="true">
-            <input type="text" id="addon-url" placeholder="URL dell'addon da aggiungere">
-            <button type="add" onclick="loadAddon(document.getElementById('addon-url').value, true)">+</button>
+        <!-- Configuration -->
+        <div class="config-group">
+            <h2>Configuration</h2>
+            <label for="tmdb-key">🔑 TMDB API Key</label>
+            <input type="text" id="tmdb-key" placeholder="Enter your TMDB API key">
+
+            <label for="language">🌍 Preferred language</label>
+            <select id="language">
+                <option value="it-IT">🇮🇹 Italiano</option>
+                <option value="es-ES">🇪🇸 Español</option>
+                <option value="fr-FR">🇫🇷 Français</option>
+                <option value="de-DE">🇩🇪 Deutsch</option>
+                <option value="pt-PT">🇵🇹 Português</option>
+                <option value="pt-BR">🇧🇷 Português (Brasil)</option>
+                <option value="ru-RU">🇷🇺 Русский</option>
+                <option value="ja-JP">🇯🇵 日本語</option>
+                <option value="zh-CN">🇨🇳 中文</option>
+                <option value="ko-KR">🇰🇷 한국어</option>
+                <option value="ar-SA">🇸🇦 العربية</option>
+                <option value="hi-IN">🇮🇳 हिन्दी</option>
+            </select>
+
+            <label for="addon-url">🧩 Add Addon from URL</label>
+            <div class="add-group" style="display: flex;">
+                <input type="text" id="addon-url" placeholder="URL of the addon to add">
+                <button type="add" onclick="loadAddon(document.getElementById('addon-url').value, true)">+</button>
+            </div>
         </div>
 
+        <!-- 👤 Login -->
         <div class="login-group">
             <h2>Login</h2>
             <input type="email" id="stremio-email" placeholder="Stremio email">
@@ -59,24 +86,33 @@
             <button onclick="stremioLogin()">Login</button>
         </div>
 
-        <div id="addons-loader" class="loader" hidden="true"></div>
+        <div id="addons-loader" class="loader"></div>
         <div id="addons-container"></div>
 
         <div class="translate-button" hidden="true">
-            <button onclick="translateSelected(stremioUser.result.authKey, transteArray)">Applica</button>
-            <button onclick="reloadAddons(stremioUser.result.authKey)">Ricarica</button>
+            <button onclick="translateSelected(stremioUser.result.authKey, transteArray)">Apply</button>
+            <button onclick="reloadAddons(stremioUser.result.authKey)">Reload</button>
         </div>
-        <!-- Cataloghi / Servizi Consigliati -->
-        <div class="external-catalogs" id="cataloghi-consigliati">
-            <h4>Cataloghi Consigliati</h4>
-            <div class="ext-links-row">
-                <a class="ext-link" href="stremio://v3-cinemeta.strem.io/manifest.json"><span>Cinemeta</span></a>
-                <a class="ext-link" href="stremio://anime-kitsu.strem.fun/manifest.json"><span>Kitsu</span></a>
-                <a class="ext-link" href="https://1fe84bc728af-stremio-anime-catalogs.baby-beamup.club/configure" target="_blank" rel="noopener"><span>AnimeCatalog</span></a>
-                <a class="ext-link" href="https://trakt.dexter21767.com/configure/" target="_blank" rel="noopener"><span>Trakt</span></a>
-            </div>
-        </div>
+
     </div>
 
 </body>
+
+<script>
+    // Enable login on Enter key
+    document.addEventListener("DOMContentLoaded", () => {
+        const emailInput = document.getElementById("stremio-email");
+        const passwordInput = document.getElementById("stremio-password");
+
+        function tryLoginOnEnter(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                stremioLogin();
+            }
+        }
+
+        emailInput.addEventListener("keydown", tryLoginOnEnter);
+        passwordInput.addEventListener("keydown", tryLoginOnEnter);
+    });
+</script>
 </html>

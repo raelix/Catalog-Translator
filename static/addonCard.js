@@ -29,43 +29,45 @@ const compatibilityList = [
     "com.mdblist.",                     // MDBLists Catalogs
     //"com.sagetendo.mal-stremio-addon",  // MAL Addon
     "dev.filmwhisper.",                 // AI Film Whisper
-    "community.anime.kitsu.search"      //Kitsu search addon
+    "community.anime.kitsu.search"      // Kitsu search addon
 ]
 
 
-async function loadAddon(url, showError=false, type="default") {
+async function loadAddon(url, _showError=false, type="default", appendNow=true) {
     if (!url) {
-        alert("Invalid URL.");
-        return;
+        showError("❌ Invalid URL.");
+        return null;
     }
 
     try {
         const response = await fetch(url);
-        if (response.ok) {
-            const manifest = await response.json();
-            const serverUrl = window.location.origin;
-            if (compatibilityList.some(id => manifest.id.startsWith(id))) {
-                if ("translated" in manifest && !url.includes(serverUrl)) {
-                    return;
-                }
-                createAddonCard(manifest, url, type);
-            } else {
-                if (showError) {
-                    alert("Addon non compatibile.");
-                }
-            }
-        } else {
-            if (showError){
-                alert(`Error: ${response.status}`);
-            }
+        if (!response.ok) {
+            if (_showError) showError(`❌ Error: ${response.status}`);
+            return null;
         }
+
+        const manifest = await response.json();
+        const serverUrl = window.location.origin;
+
+        if (!compatibilityList.some(id => manifest.id.startsWith(id))) {
+            if (_showError) showError("❌ Incompatible addon.");
+            return null;
+        }
+
+        if ("translated" in manifest && !url.includes(serverUrl)) {
+            return null;
+        }
+
+        // Return the element without immediately appending
+        return createAddonCard(manifest, url, type, appendNow);
 
     } catch (error) {
         console.log(error);
+        return null;
     }
 }
 
-function createAddonCard(manifest, url, type="default") {
+function createAddonCard(manifest, url, type="default", appendNow=true) {
     const container = document.getElementById("addons-container");
 
     const addonCard = document.createElement("div");
@@ -78,23 +80,24 @@ function createAddonCard(manifest, url, type="default") {
     addonCard.appendChild(createToastRatingsOption(manifest));
 
     const actionsDiv = document.createElement("div");
+    actionsDiv.className = "addon-actions";
+
     if (type == "default") {
-        actionsDiv.className = "addon-actions";
         const installBtn = createInstallButton(manifest, url);
         actionsDiv.appendChild(installBtn);
-    } 
-    else if (type == "generator") {
-        actionsDiv.className = "addon-actions";
+    } else if (type == "generator") {
         const generateBtn = createGenerateButton(manifest, url);
         const copyBtn = createCopyButton(manifest, url);
         actionsDiv.appendChild(generateBtn);
         actionsDiv.appendChild(copyBtn);
         addonCard.appendChild(createLinkTextBox("", manifest));
     }
-    
 
     addonCard.appendChild(actionsDiv);
-    container.appendChild(addonCard);
+
+    if (appendNow) container.appendChild(addonCard);
+
+    return addonCard; // always return the element
 }
 
 function createAddonHeader(manifest) {
@@ -104,7 +107,7 @@ function createAddonHeader(manifest) {
     const logo = document.createElement("img");
     logo.className = "addon-logo";
     logo.src = manifest.logo || "static/img/addon_logo.png";
-    logo.alt = "Logo dell'addon";
+    logo.alt = "Addon logo";
     addonHeader.appendChild(logo);
 
     const title = document.createElement("h3");
@@ -116,13 +119,13 @@ function createAddonHeader(manifest) {
 
 function createAddonDescription(manifest) {
     const description = document.createElement("p");
-    description.innerHTML = `<strong>Descrizione:</strong> ${manifest.description || "N/A"}`;
+    description.innerHTML = `<strong>Description:</strong> ${manifest.description || "N/A"}`;
     return description;
 }
 
 function createAddonVersion(manifest) {
     const version = document.createElement("p");
-    version.innerHTML = `<strong>Versione:</strong> ${manifest.version || "N/A"}`;
+    version.innerHTML = `<strong>Version:</strong> ${manifest.version || "N/A"}`;
     return version;
 }
 
@@ -153,7 +156,7 @@ function createToastRatingsOption(manifest) {
     toastRatingsDiv.appendChild(toastRatingsCheckbox);
 
     const toastRatingsLabel = document.createElement("label");
-    toastRatingsLabel.htmlFor = `toastRagings-${manifest.name}`;
+    toastRatingsLabel.htmlFor = `toastRatings-${manifest.name}`;
     toastRatingsLabel.innerText = "Toast Ratings";
     toastRatingsDiv.appendChild(toastRatingsLabel);
 
@@ -163,8 +166,9 @@ function createToastRatingsOption(manifest) {
 function createInstallButton(manifest, url) {
     const installBtn = document.createElement("button");
     installBtn.className = "install-btn";
-    installBtn.innerText = "Seleziona";
+    installBtn.innerText = "Select";
     installBtn.state = "active";
+    installBtn.style.backgroundColor = "#2ecc71";
     installBtn.onclick = () => toggleAddonSelection(installBtn, manifest, url);
     return installBtn;
 }
@@ -172,15 +176,7 @@ function createInstallButton(manifest, url) {
 function createGenerateButton(manifest, url) {
     const generateBtn = document.createElement("button");
     generateBtn.className = "generate-btn";
-    generateBtn.innerText = "Genera link";
-    generateBtn.onclick = () => generateLinkByCard(manifest, url, generateTranslatorLink);
-    return generateBtn;
-}
-
-function createGenerateButton(manifest, url) {
-    const generateBtn = document.createElement("button");
-    generateBtn.className = "generate-btn";
-    generateBtn.innerText = "Genera link";
+    generateBtn.innerText = "Generate link";
     generateBtn.onclick = () => generateLinkByCard(manifest, url, generateTranslatorLink);
     return generateBtn;
 }
@@ -188,7 +184,7 @@ function createGenerateButton(manifest, url) {
 function createCopyButton(manifest, url) {
     const generateBtn = document.createElement("button");
     generateBtn.className = "copy-btn";
-    generateBtn.innerText = "Copia link";
+    generateBtn.innerText = "Copy link";
     generateBtn.onclick = () => copyLinkCard(manifest);
     return generateBtn;
 }
@@ -202,18 +198,18 @@ function createLinkTextBox(link, manifest) {
     return textArea;
 }
 
-
 function toggleAddonSelection(installBtn, manifest, url) {
     const spCheckbox = document.getElementById(`skipPoster-${manifest.name}`);
     const trCheckbox = document.getElementById(`toastRatings-${manifest.name}`);
     if (installBtn.state === "active") {
         installBtn.state = "not_active";
-        installBtn.innerText = "Rimuovi";
+        installBtn.innerText = "Remove";
         installBtn.style.backgroundColor = "#ff4b4b";
         
         const skipQuery = spCheckbox.checked ? 1 : 0;
         const rateQuery = trCheckbox.checked ? 1 : 0;
         spCheckbox.disabled = true;
+        trCheckbox.disabled = true;
         manifest.transportUrl = url;
         manifest.skipPoster = skipQuery;
         manifest.toastRatings = rateQuery;
@@ -222,10 +218,10 @@ function toggleAddonSelection(installBtn, manifest, url) {
         spCheckbox.disabled = false;
         trCheckbox.disabled = false;
         installBtn.state = "active";
-        installBtn.innerText = "Seleziona";
+        installBtn.innerText = "Select";
         installBtn.style.backgroundColor = "#2ecc71";
         
-        //Remove from translations selections
+        // Remove from translation selections
         transteArray = transteArray.filter(item => item !== manifest);
     }
 }
@@ -233,7 +229,7 @@ function toggleAddonSelection(installBtn, manifest, url) {
 async function copyLinkCard(manifest) {
     const linkBox = document.getElementById(`linkBox-${manifest.name}`);
     await navigator.clipboard.writeText(linkBox.value);
-    alert('Link copiato!');
+    showSuccess('✅ Link copied!');
 }
 
 function generateLinkByCard(manifest, url, linkGeneratorFunc) {

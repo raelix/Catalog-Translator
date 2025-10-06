@@ -21,12 +21,13 @@ async function stremioLogin() {
     .then(response => response.json());
     
     if (response.error) {
-        console.log(response.error.message);
+        showError("❌ " + response.error.message);
     } else {
         stremioUser = response;
         document.getElementById("desc-head").style.display = "none";
         document.querySelector(".login-group").style.display = "none";
         document.querySelector(".add-group").style.display = "flex";
+        document.querySelector(".config-group").style.display = "flex";
         document.querySelector(".translate-button").style.visibility = "visible";
         await stremioLoadAddons(response.result.authKey);
     }
@@ -34,15 +35,21 @@ async function stremioLogin() {
 
 async function stremioLoadAddons(authKey) {
     const loader = document.querySelector(".loader");
-    const addonCollection = await stremioAddonCollectionGet(authKey);
+    loader.style.display = "flex";
 
-    loader.style.visibility = "visible";
-    // Load Addons
-    for(var i=0; i<addonCollection.result.addons.length; i++) {
-        var url = addonCollection.result.addons[i].transportUrl;
-        await loadAddon(url);
-    }
-    loader.style.visibility = "hidden";
+    const container = document.getElementById("addons-container");
+    const addonCollection = await stremioAddonCollectionGet(authKey);
+    const addons = addonCollection.result.addons;
+
+    // Carica tutti in parallelo e aspetta i risultati
+    const results = await Promise.all(addons.map(addon => loadAddon(addon.transportUrl, false, "default", false)));
+
+    // Aggiungi al DOM solo quelli validi, nell'ordine corretto
+    results.forEach(card => {
+        if(card) container.appendChild(card);
+    });
+
+    loader.style.display = "none";
 }
 
 async function stremioAddonCollectionGet(authKey) {

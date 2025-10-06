@@ -3,6 +3,7 @@ import api.tmdb as tmdb
 import urllib.parse
 import asyncio
 import httpx
+import json
 import os
 
 # Cache set
@@ -10,26 +11,85 @@ import os
 translations_cache = Cache('./cache/translation/tmp')
 translations_cache.clear()
 
+# Load languages
+with open("languages.json", "r", encoding="utf-8") as f:
+    LANGUAGES = json.load(f) 
+
+# Cache set
+translations_cache = {}
+for language in LANGUAGES:
+    translations_cache[language] = Cache(f"./cache/{language}/translation/tmp")
+    translations_cache[language].clear()
+
 # Poster ratings
 RATINGS_SERVER = os.getenv('TR_SERVER', 'https://ca6771aaa821-toast-ratings.baby-beamup.club')
 
+# Language flags converter
+LANGUAGE_FLAGS = {
+    "it-IT": "🇮🇹",
+    "es-ES": "🇪🇸",
+    "fr-FR": "🇫🇷",
+    "de-DE": "🇩🇪",
+    "pt-PT": "🇵🇹",
+    "pt-BR": "🇧🇷",
+    "ru-RU": "🇷🇺",
+    "ja-JP": "🇯🇵",
+    "zh-CN": "🇨🇳",
+    "ko-KR": "🇰🇷",
+    "ar-SA": "🇸🇦",
+    "hi-IN": "🇮🇳"
+}
 
-async def translate_with_api(client: httpx.AsyncClient, text: str, source='en', target='it') -> str:
+# For metabuilder
+EPISODE_TRANSLATIONS = {
+    "it-IT": "Episodio",
+    "es-ES": "Episodio",
+    "fr-FR": "Épisode",
+    "de-DE": "Episode",
+    "pt-PT": "Episódio",
+    "pt-BR": "Episódio",
+    "ru-RU": "Эпизод",
+    "ja-JP": "エピソード",
+    "zh-CN": "集",
+    "ko-KR": "에피소드",
+    "ar-SA": "حلقة",
+    "hi-IN": "एपिसोड"
+}
 
-    translation = translations_cache.get(text)
+
+async def translate_with_api(client: httpx.AsyncClient, text: str, language: str, source='en') -> str:
+
+    translation = translations_cache[language].get(text)
+    target = language.split('-')[0]
     if translation == None and text != None and text != '':
         api_url = f"https://lingva-translate-azure.vercel.app/api/v1/{source}/{target}/{urllib.parse.quote(text)}"
 
         response = await client.get(api_url)
         translated_text = response.json().get('translation', '')
-        translations_cache.set(text, translated_text)
+        translations_cache[language].set(text, translated_text)
     else:
         translated_text = translation
 
     return translated_text
 
 
-def translate_catalog(original: dict, tmdb_meta: dict, skip_poster, toast_ratings) -> dict:
+async def translate_episodes_with_api(client: httpx.AsyncClient, episodes: list[dict], language: str):
+    tasks = []
+
+    for episode in episodes:
+        tasks.append(translate_with_api(client, episode.get('title', ''), language)),
+        tasks.append(translate_with_api(client, episode.get('overview', ''), language))
+
+    translations = await asyncio.gather(*tasks)
+
+    for i, episode in enumerate(episodes):
+        episode['title'] = translations[2 * i]
+        episode['overview'] = translations[2 * i + 1]
+
+    return episodes
+
+
+def translate_catalog(original: dict, tmdb_meta: dict, skip_poster, toast_ratings, language: str) -> dict:
     new_catalog = original
 
     for i, item in enumerate(new_catalog['metas']):
@@ -56,7 +116,7 @@ def translate_catalog(original: dict, tmdb_meta: dict, skip_poster, toast_rating
             if skip_poster == '0':
                 try: 
                     if toast_ratings == '1':
-                        item['poster'] = f"{RATINGS_SERVER}/{item['type']}/get_poster/{tmdb_meta[i]['imdb_id']}.jpg"
+                        item['poster'] = f"{RATINGS_SERVER}/{item['type']}/get_poster/{language}/{tmdb_meta[i]['imdb_id']}.jpg"
                     else:
                         item['poster'] = tmdb.TMDB_POSTER_URL + detail['poster_path']
                 except Exception as e: 
@@ -65,23 +125,7 @@ def translate_catalog(original: dict, tmdb_meta: dict, skip_poster, toast_rating
     return new_catalog
 
 
-async def translate_episodes_with_api(client: httpx.AsyncClient, episodes: list[dict]):
-    tasks = []
-
-    for episode in episodes:
-        tasks.append(translate_with_api(client, episode.get('title', ''))),
-        tasks.append(translate_with_api(client, episode.get('overview', '')))
-
-    translations = await asyncio.gather(*tasks)
-
-    for i, episode in enumerate(episodes):
-        episode['title'] = translations[2 * i]
-        episode['overview'] = translations[2 * i + 1]
-
-    return episodes
-
-
-async def translate_episodes(client: httpx.AsyncClient, original_episodes: list[dict]):
+async def translate_episodes(client: httpx.AsyncClient, original_episodes: list[dict], language: str, tmdb_key: str):
     translate_index = []
     tasks = []
     new_episodes = original_episodes
@@ -89,7 +133,7 @@ async def translate_episodes(client: httpx.AsyncClient, original_episodes: list[
     # Select not translated episodes
     for i, episode in enumerate(original_episodes):
         if 'tvdb_id' in episode:
-            tasks.append(tmdb.get_tmdb_data(client, episode['tvdb_id'], "tvdb_id"))
+            tasks.append(tmdb.get_tmdb_data(client, episode['tvdb_id'], "tvdb_id", language, tmdb_key))
             translate_index.append(i)
 
     translations = await asyncio.gather(*tasks)

@@ -15,6 +15,22 @@ BASE_URL = "https://api4.thetvdb.com/v4"
 IMAGE_URL = "https://thetvdb.com"
 EPISODE_PAGE = 500
 
+# TVDB language map
+LANGUAGE_MAP = {
+    "it-IT": "ita",
+    "es-ES": "spa",
+    "fr-FR": "fra",
+    "de-DE": "deu",
+    "pt-PT": "por",
+    "pt-BR": "por-BR",
+    "ru-RU": "rus",
+    "ja-JP": "jpn",
+    "zh-CN": "chi",
+    "ko-KR": "kor",
+    "ar-SA": "ara",
+    "hi-IN": "hin"
+}
+
 # Cache set
 #token_cache = Cache(maxsize=1, ttl=timedelta(days=29).total_seconds())
 token_cache = Cache('./cache/tvdb/token', timedelta(days=29).total_seconds())
@@ -52,7 +68,7 @@ async def tvdb_login(client: httpx.AsyncClient) -> str:
     payload = {
         "apikey": TVDB_API_KEY,
         "pin": None,
-        "user": TVDB_USER
+        "user": None
     }
     async with httpx.AsyncClient() as client:
         resp = await fetch_and_retry(client, f"{BASE_URL}/login", '', type='POST', payload=payload)
@@ -68,12 +84,12 @@ async def get_season_details(client: httpx.AsyncClient, season_id: int):
     return data
 
 # Series detail with episodes
-async def get_translated_episodes(client: httpx.AsyncClient, series_id: int, page: int):
+async def get_translated_episodes(client: httpx.AsyncClient, series_id: int, page: int, language: str):
     params = {
         "page": page
     }
     token = token_cache.get('token', await tvdb_login(client))
-    data = await fetch_and_retry(client, f"{BASE_URL}/series/{series_id}/episodes/official/ita", token=token, type='GET', params=params)
+    data = await fetch_and_retry(client, f"{BASE_URL}/series/{series_id}/episodes/official/{LANGUAGE_MAP[language]}", token=token, type='GET', params=params)
     return data
 
 
