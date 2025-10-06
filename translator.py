@@ -101,7 +101,7 @@ def translate_catalog(original: dict, tmdb_meta: dict, skip_poster, toast_rating
             # Set poster if contend not have tmdb informations
             if toast_ratings == '1':
                 if 'tt' in tmdb_meta[i].get('imdb_id', ''):
-                    item['poster'] = f"{RATINGS_SERVER}/{item['type']}/get_poster/{tmdb_meta[i]['imdb_id']}.jpg"
+                    item['poster'] = f"{RATINGS_SERVER}/{item['type']}/get_poster/{language}/{tmdb_meta[i]['imdb_id']}.jpg"
 
         else:
             try: item['name'] = detail['title'] if type == 'movie' else detail['name']

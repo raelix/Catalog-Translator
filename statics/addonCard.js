@@ -106,7 +106,7 @@ function createAddonHeader(manifest) {
 
     const logo = document.createElement("img");
     logo.className = "addon-logo";
-    logo.src = manifest.logo || "static/img/addon_logo.png";
+    logo.src = manifest.logo || "statics/img/addon_logo.png";
     logo.alt = "Addon logo";
     addonHeader.appendChild(logo);
 
