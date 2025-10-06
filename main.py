@@ -53,7 +53,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 templates = Jinja2Templates(directory="templates")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/statics", StaticFiles(directory="statics"), name="statics")
 
 
 stremio_headers = {
@@ -409,7 +409,7 @@ async def clean_cache(password: str = Query(...)):
 @app.get('/favicon.ico')
 @app.get('/addon-logo.png')
 async def get_poster_placeholder():
-    return FileResponse("static/img/toast-translator-logo.png", media_type="image/png")
+    return FileResponse("statics/img/toast-translator-logo.png", media_type="image/png")
 
 
 def decode_base64_url(encoded_url):
