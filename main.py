@@ -276,7 +276,7 @@ async def get_meta(request: Request,response: Response, addon_url, user_settings
                         
                         if type == 'series':
                             tasks = [
-                                translator.translate_with_api(client, description, language, tmdb_key),
+                                translator.translate_with_api(client, description, language),
                                 translator.translate_episodes(client, meta['meta']['videos'], language, tmdb_key)
                             ]
                             description, episodes = await asyncio.gather(*tasks)
