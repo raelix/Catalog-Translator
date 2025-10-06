@@ -11,7 +11,7 @@ async function translateSelected(authKey, selectList) {
         return null;
     }
 
-    const valid = await validateTMDBKey(tmdbApiKey);
+    const valid = validateTMDBKey(tmdbApiKey);
     if (!valid) {
         showError("❌ Invalid TMDB API Key. Please check your key and try again.");
         hideLoader();
@@ -79,7 +79,7 @@ async function reloadAddons(authKey) {
     await stremioLoadAddons(authKey);
 }
 
-async function generateTranslatorLink(addonUrl, skip_poster, toast_ratings) {
+function generateTranslatorLink(addonUrl, skip_poster, toast_ratings) {
     const serverUrl = window.location.origin;
     const baseAddonUrl = getBaseUrl(addonUrl).replace("/manifest.json", "");
     const urlEncoded = btoa(baseAddonUrl);

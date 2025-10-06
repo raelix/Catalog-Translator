@@ -47,6 +47,21 @@
                 <li>🖼️ <strong>Skip poster</strong> → needed if the original catalog supports RPDB posters</li>
                 <li>⭐ <strong>Toast Ratings</strong> → posters with ratings</li>
             </ul>
+
+            <h2>🔐 Why login?:</h2>
+            <ul>
+                <li>You can log in to upload compatible addons installed on your account</li>
+                <li>No personal data is stored outside of Stremio</li>
+                <li>If you don't want to log in you can use the Link Generator 🧩</li>
+            </ul>
+
+            <h2>🧩 Link Generator:</h2>
+            <ul>
+                <li>If you don't want to log in you can use the 
+                    <a href="link_generator.html" class="generate-link-btn">Link Generator</a>
+                    to generate addon installation URLs
+                </li>
+            </ul>
         </div>
 
         <!-- Configuration -->
@@ -73,7 +88,7 @@
 
             <label for="addon-url">🧩 Add Addon from URL</label>
             <div class="add-group" style="display: flex;">
-                <input type="text" id="addon-url" placeholder="URL of the addon to add">
+                <input type="text" id="addon-url" placeholder="URL of the addon manifest">
                 <button type="add" onclick="loadAddon(document.getElementById('addon-url').value, true)">+</button>
             </div>
         </div>

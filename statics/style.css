@@ -134,6 +134,22 @@ button:hover {
     box-shadow: 0 0 14px rgba(155,93,229,0.35), 0 0 24px rgba(0,255,240,0.25);
 }
 
+.generate-link-btn {
+    display: inline-block;
+    padding: 6px 12px;
+    background-color: #0078d7;
+    color: var(--text);
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 600;
+    margin-left: 4px;
+    transition: transform 120ms ease, box-shadow 200ms ease, background 200ms ease;
+}
+.generate-link-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 14px rgba(155,93,229,0.35), 0 0 24px rgba(0,255,240,0.25);
+}
+
 .addon-info {
     background: linear-gradient(180deg, rgba(18,19,32,0.85), rgba(18,19,32,0.6));
     border: 1px solid rgba(255,255,255,0.08);

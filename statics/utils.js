@@ -1,11 +1,8 @@
 // Validate TMDB Key
-async function validateTMDBKey(apiKey) {
-    try {
-        const res = await fetch(`https://api.themoviedb.org/3/configuration?api_key=${apiKey}`);
-        return res.ok;
-    } catch {
-        return false;
-    }
+function validateTMDBKey(apiKey) {
+  return fetch(`https://api.themoviedb.org/3/configuration?api_key=${apiKey}`)
+    .then(res => res.ok)
+    .catch(() => false);
 }
 
 // Show error message

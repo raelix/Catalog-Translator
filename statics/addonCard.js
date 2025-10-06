@@ -233,6 +233,22 @@ async function copyLinkCard(manifest) {
 }
 
 function generateLinkByCard(manifest, url, linkGeneratorFunc) {
+
+    // Check TMDB API Key validity
+    const tmdbApiKey = document.getElementById("tmdb-key").value;
+
+    if (!tmdbApiKey) {
+        showError("⚠️ Please enter a TMDB API Key before continuing!");
+        return null;
+    }
+
+    const valid = validateTMDBKey(tmdbApiKey);
+    if (!valid) {
+        showError("❌ Invalid TMDB API Key. Please check your key and try again.");
+        return null;
+    }
+
+    //
     const spCheckbox = document.getElementById(`skipPoster-${manifest.name}`);
     const trCheckbox = document.getElementById(`toastRatings-${manifest.name}`);
     const linkBox = document.getElementById(`linkBox-${manifest.name}`)
