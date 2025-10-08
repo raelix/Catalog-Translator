@@ -11,7 +11,7 @@ async function translateSelected(authKey, selectList) {
         return null;
     }
 
-    const valid = validateTMDBKey(tmdbApiKey);
+    const valid = await validateTMDBKey(tmdbApiKey);
     if (!valid) {
         showError("❌ Invalid TMDB API Key. Please check your key and try again.");
         hideLoader();

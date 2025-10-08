@@ -177,7 +177,9 @@ function createGenerateButton(manifest, url) {
     const generateBtn = document.createElement("button");
     generateBtn.className = "generate-btn";
     generateBtn.innerText = "Generate link";
-    generateBtn.onclick = () => generateLinkByCard(manifest, url, generateTranslatorLink);
+    generateBtn.onclick = async () => {
+        await generateLinkByCard(manifest, url, generateTranslatorLink);
+    };
     return generateBtn;
 }
 
@@ -232,7 +234,7 @@ async function copyLinkCard(manifest) {
     showSuccess('✅ Link copied!');
 }
 
-function generateLinkByCard(manifest, url, linkGeneratorFunc) {
+async function generateLinkByCard(manifest, url, linkGeneratorFunc) {
 
     // Check TMDB API Key validity
     const tmdbApiKey = document.getElementById("tmdb-key").value;
@@ -242,7 +244,8 @@ function generateLinkByCard(manifest, url, linkGeneratorFunc) {
         return null;
     }
 
-    const valid = validateTMDBKey(tmdbApiKey);
+    const valid = await validateTMDBKey(tmdbApiKey);
+    console.log(valid)
     if (!valid) {
         showError("❌ Invalid TMDB API Key. Please check your key and try again.");
         return null;

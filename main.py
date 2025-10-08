@@ -159,6 +159,7 @@ async def get_catalog(response: Response, addon_url, type: str, user_settings: s
     tmdb_key = user_settings['tmdb_key']
     addon_url = decode_base64_url(addon_url)
 
+
     async with httpx.AsyncClient(follow_redirects=True, timeout=REQUEST_TIMEOUT) as client:
         response = await client.get(f"{addon_url}/catalog/{type}/{path}")
 
@@ -398,8 +399,15 @@ async def reload_anime_mapping(password: str = Query(...)):
 @app.get('/clean_cache')
 async def clean_cache(password: str = Query(...)):
     if password == ADMIN_PASSWORD:
-        tmdb.tmp_cache.expire()
-        meta_cache.expire()
+
+        # TMDB data
+        for cache in tmdb.tmp_cache.values():
+            cache.expire()
+
+        # Meta
+        for cache in meta_cache.values():
+            cache.expire()
+            
         return json_response({"status": "Cache cleaned."})
     else:
         return json_response({"Error": "Access delined"})
