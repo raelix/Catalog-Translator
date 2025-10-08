@@ -30,7 +30,7 @@
 ---
 
 ## 🔐 Why log in?
-- You can log in to upload installed addons compatible with your account
+- You can log in to load and install addons installed on your account.
 - No personal data is stored outside of Stremio
 - If you don't want to log in, you can use the Link Generator 🧩
 
