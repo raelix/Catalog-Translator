@@ -20,7 +20,7 @@ with open("languages.json", "r", encoding="utf-8") as f:
 tmp_cache = {}
 for language in LANGUAGES:
     tmp_cache[language] = Cache(f"./cache/{language}/tmdb/tmp", timedelta(days=7).total_seconds())
-    tmp_cache[language].clear()
+    #tmp_cache[language].clear()
 
 
 # Too many requests retry
@@ -45,6 +45,10 @@ async def fetch_and_retry(client: httpx.AsyncClient, id: str, url: str, language
         elif response.status_code == 429:
             print(response)
             await asyncio.sleep(attempt * 2)
+
+        elif response.status_code == 401:
+            print('Invalid TMDB key!')
+            return {"error": "tmdb-key-error"}
 
     return {}
 

@@ -1,6 +1,6 @@
 {
     "id": "com.toast.translator",
-    "version": "0.1.5",
+    "version": "0.1.6",
     "name": "Toast Translator",
     "description": "Translator for catalog addons!",
     "logo": "https://i.imgur.com/1904KDj.png",
@@ -18,5 +18,11 @@
     "behaviorHints": {
         "configurable": true,
         "configurationRequired": true
+    },
+    "contactEmail": "flixtoast902@gmail.com",
+    "stremioAddonsConfig": {
+        "issuer": "https://stremio-addons.net",
+        "signature": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0..sN-_8js3bSXQ0cMFJpW3Eg.FheEmu_bKboneSinVecpMBqZfjo57NdQl194EB-iDQo4v_G8bfBR6ZXPJnWDdwrNG9gkj96kSkPbj5LjbVUhOLc_ISeiLCb-BKpTUO2x7SmypPE786e2YlataKpNa66_.evPjj7HXIzsBuuETO2D51w"
     }
+
 }

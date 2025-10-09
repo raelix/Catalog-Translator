@@ -18,7 +18,7 @@ import json
 import os
 
 # Settings
-translator_version = 'v0.1.5'
+translator_version = 'v0.1.6'
 FORCE_PREFIX = False
 FORCE_META = False
 USE_TMDB_ID_META = True
@@ -37,7 +37,7 @@ with open("languages.json", "r", encoding="utf-8") as f:
 meta_cache = {}
 for language in LANGUAGES:
     meta_cache[language] = Cache(f"./cache/{language}/meta/tmp",  timedelta(hours=12).total_seconds())
-    meta_cache[language].clear()
+    #meta_cache[language].clear()
 
 
 # Server start
@@ -50,6 +50,7 @@ async def lifespan(app: FastAPI):
     mal.load_anime_map()
     yield
     print('Shutdown')
+    
 
 app = FastAPI(lifespan=lifespan)
 templates = Jinja2Templates(directory="templates")
@@ -248,6 +249,10 @@ async def get_meta(request: Request,response: Response, addon_url, user_settings
                 
                 # Not empty tmdb meta
                 if len(tmdb_meta.get('meta', [])) > 0:
+                    # Invalid TMDB key error
+                    if 'error' in tmdb_meta['meta']['id']:
+                        return json_response(tmdb_meta)
+                    
                     # Not merge anime
                     if id not in kitsu.imdb_ids_map:
                         tasks = []
@@ -370,6 +375,14 @@ async def get_meta(request: Request,response: Response, addon_url, user_settings
             return json_response(meta)
 
 
+# Addon catalog reponse
+@app.get('/{addon_url}/{user_settings}/addon_catalog/{path:path}')
+async def get_addon_catalog(addon_url, path: str):
+    addon_url = decode_base64_url(addon_url)
+    async with httpx.AsyncClient(follow_redirects=True, timeout=REQUEST_TIMEOUT) as client:
+        response = await client.get(f"{addon_url}/addon_catalog/{path}")
+        return json_response(response.json())
+
 # Subs redirect
 @app.get('/{addon_url}/{user_settings}/subtitles/{path:path}')
 async def get_subs(addon_url, path: str):
@@ -407,7 +420,7 @@ async def clean_cache(password: str = Query(...)):
         # Meta
         for cache in meta_cache.values():
             cache.expire()
-            
+
         return json_response({"status": "Cache cleaned."})
     else:
         return json_response({"Error": "Access delined"})

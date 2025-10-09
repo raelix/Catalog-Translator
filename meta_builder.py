@@ -26,6 +26,16 @@ async def build_metadata(id: str, type: str, language: str, tmdb_key: str):
         tmdb_id = id.replace('tmdb:', '')
     elif tmdb_id != None and 'tmdb:' in tmdb_id:
         tmdb_id = tmdb_id.replace('tmdb:', '')
+    elif 'error' in tmdb_id:
+        return { 
+            "meta": {
+                "id": "error:tmdb-key",
+                "name": "Invalid TMDB Key",
+                "description": "Invalid TMDB Key",
+                "poster": "https://i.imgur.com/Zi5UZV3.png",
+                "type": type
+            }
+        }
     else:
         return {"meta": {}}
 
@@ -56,8 +66,22 @@ async def build_metadata(id: str, type: str, language: str, tmdb_key: str):
             cinemeta_data = data[2].json()
         else:
             cinemeta_data = {'meta': {}}
+        
+        # Empty tmdb data
         if len(tmdb_data) == 0:
             return {"meta": {}}
+
+        # Invalid TMDB key error
+        if tmdb_data.get('error'):
+            return { 
+                "meta": {
+                    "id": "error:tmdb-key",
+                    "name": "Invalid TMDB Key",
+                    "description": "Invalid TMDB Key",
+                    "poster": "https://i.imgur.com/Zi5UZV3.png",
+                    "type": type
+                }
+        }
         
         title = tmdb_data.get(parse_title, '')
         poster_path = tmdb_data.get('poster_path', '')

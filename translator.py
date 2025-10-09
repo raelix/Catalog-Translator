@@ -19,7 +19,7 @@ with open("languages.json", "r", encoding="utf-8") as f:
 translations_cache = {}
 for language in LANGUAGES:
     translations_cache[language] = Cache(f"./cache/{language}/translation/tmp")
-    translations_cache[language].clear()
+    #translations_cache[language].clear()
 
 # Poster ratings
 RATINGS_SERVER = os.getenv('TR_SERVER', 'https://ca6771aaa821-toast-ratings.baby-beamup.club')
@@ -93,34 +93,43 @@ def translate_catalog(original: dict, tmdb_meta: dict, skip_poster, toast_rating
     new_catalog = original
 
     for i, item in enumerate(new_catalog['metas']):
-        try:
-            type = item['type']
-            type_key = 'movie' if type == 'movie' else 'tv'
-            detail = tmdb_meta[i][f"{type_key}_results"][0]
-        except:
-            # Set poster if contend not have tmdb informations
-            if toast_ratings == '1':
-                if 'tt' in tmdb_meta[i].get('imdb_id', ''):
-                    item['poster'] = f"{RATINGS_SERVER}/{item['type']}/get_poster/{language}/{tmdb_meta[i]['imdb_id']}.jpg"
-
-        else:
-            try: item['name'] = detail['title'] if type == 'movie' else detail['name']
-            except: pass
-
-            try: item['description'] = detail['overview']
-            except: pass
-
-            try: item['background'] = tmdb.TMDB_BACK_URL + detail['backdrop_path']
-            except: pass
-
-            if skip_poster == '0':
-                try: 
-                    if toast_ratings == '1':
+        is_error = None#tmdb_meta[i].get('error', None)
+        if not is_error:
+            try:
+                type = item['type']
+                type_key = 'movie' if type == 'movie' else 'tv'
+                detail = tmdb_meta[i][f"{type_key}_results"][0]
+            except:
+                # Set poster if contend not have tmdb informations
+                if toast_ratings == '1':
+                    if 'tt' in tmdb_meta[i].get('imdb_id', ''):
                         item['poster'] = f"{RATINGS_SERVER}/{item['type']}/get_poster/{language}/{tmdb_meta[i]['imdb_id']}.jpg"
-                    else:
-                        item['poster'] = tmdb.TMDB_POSTER_URL + detail['poster_path']
-                except Exception as e: 
-                    print(e)
+
+            else:
+                try: item['name'] = detail['title'] if type == 'movie' else detail['name']
+                except: pass
+
+                try: item['description'] = detail['overview']
+                except: pass
+
+                try: item['background'] = tmdb.TMDB_BACK_URL + detail['backdrop_path']
+                except: pass
+
+                if skip_poster == '0':
+                    try: 
+                        if toast_ratings == '1':
+                            item['poster'] = f"{RATINGS_SERVER}/{item['type']}/get_poster/{language}/{tmdb_meta[i]['imdb_id']}.jpg"
+                        else:
+                            item['poster'] = tmdb.TMDB_POSTER_URL + detail['poster_path']
+                    except Exception as e: 
+                        print(e)
+        # Error
+        else:
+            item['name'] = 'Invalid TMDB Key'
+            item['id'] = 'error:tmdb-key'
+            item['poster'] = 'https://i.imgur.com/Zi5UZV3.png'
+            item['background'] = None
+            item['description'] = 'Invalid TMDB Key'
 
     return new_catalog
 
