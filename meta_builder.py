@@ -219,25 +219,27 @@ def extract_series_episode_runtime(tmdb_data: dict) -> str:
 
 
 def extract_logo(fanart_data: dict, tmdb_data: dict, cinemeta_data: dict, language: str) -> str:
+    lang_iso_639_1 = language.split('-')[0]
     # Try TMDB logo
     if len(tmdb_data.get('images', {}).get('logos', [])) > 0:
-        return tmdb.TMDB_POSTER_URL + tmdb_data['images']['logos'][0]['file_path']
+        for logo in tmdb_data['images']['logos']:
+            if logo['iso_639_1'] == lang_iso_639_1:
+                return tmdb.TMDB_POSTER_URL + logo['file_path']
 
     # FanArt
-    language_fanart = language.split('-')[0]
     en_logo = ''
     # Try HD logo
     for logo in fanart_data.get('hdmovielogo', []):
         if logo['lang'] == 'en':
             en_logo = logo['url']
-        elif logo['lang'] == language_fanart:
+        elif logo['lang'] == lang_iso_639_1:
             return logo['url']
     
     # Try normal logo
     for logo in fanart_data.get('movielogo', []):
         if logo['lang'] == 'en':
             en_logo = logo['url']
-        elif logo['lang'] == language_fanart:
+        elif logo['lang'] == lang_iso_639_1:
             return logo['url']
         
     # Cinemeta
