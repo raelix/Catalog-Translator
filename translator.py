@@ -93,7 +93,7 @@ def translate_catalog(original: dict, tmdb_meta: dict, skip_poster, toast_rating
     new_catalog = original
 
     for i, item in enumerate(new_catalog['metas']):
-        is_error = None#tmdb_meta[i].get('error', None)
+        is_error = tmdb_meta[i].get('error', None)
         if not is_error:
             try:
                 type = item['type']

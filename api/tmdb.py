@@ -12,6 +12,8 @@ TMDB_POSTER_URL = 'https://image.tmdb.org/t/p/w500'
 TMDB_BACK_URL = 'https://image.tmdb.org/t/p/original'
 TMDB_API_KEY = os.getenv('TMDB_API_KEY')
 
+TMDB_SEMAPHORE = asyncio.Semaphore(50)
+
 # Load languages
 with open("languages.json", "r", encoding="utf-8") as f:
     LANGUAGES = json.load(f) 
@@ -29,27 +31,28 @@ async def fetch_and_retry(client: httpx.AsyncClient, id: str, url: str, language
         "accept": "application/json"
     }
 
-    for attempt in range(1, max_retries + 1):
-        response = await client.get(url, headers=headers, params=params)
+    async with TMDB_SEMAPHORE:
+        for attempt in range(1, max_retries + 1):
+            response = await client.get(url, headers=headers, params=params)
 
-        if response.status_code == 200:
-            meta_dict = response.json()
+            if response.status_code == 200:
+                meta_dict = response.json()
 
-            # Only imdb_id cache save
-            if 'tt' in str(id):
-                meta_dict['imdb_id'] = id
-                tmp_cache[language].set(id, meta_dict)
+                # Only imdb_id cache save
+                if 'tt' in str(id):
+                    meta_dict['imdb_id'] = id
+                    tmp_cache[language].set(id, meta_dict)
 
-            return meta_dict
+                return meta_dict
 
-        elif response.status_code == 429:
-            print(response)
-            await asyncio.sleep(attempt * 2)
+            elif response.status_code == 429:
+                print(response)
+                await asyncio.sleep(1)#(attempt * 2)
 
-        elif response.status_code == 401:
-            print('Invalid TMDB key!')
-            return {"error": "tmdb-key-error"}
+            elif response.status_code == 401:
+                return {"error": "tmdb-key-error"}
 
+    print('TMDB failed fetch')
     return {}
 
 

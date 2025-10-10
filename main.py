@@ -156,10 +156,9 @@ async def get_manifest(addon_url, user_settings):
 @app.get("/{addon_url}/{user_settings}/catalog/{type}/{path:path}")
 async def get_catalog(response: Response, addon_url, type: str, user_settings: str, path: str):
     user_settings = parse_user_settings(user_settings)
-    language = user_settings['language']
-    tmdb_key = user_settings['tmdb_key']
+    language = user_settings.get('language', 'it-IT')
+    tmdb_key = user_settings.get('tmdb_key', None)
     addon_url = decode_base64_url(addon_url)
-
 
     async with httpx.AsyncClient(follow_redirects=True, timeout=REQUEST_TIMEOUT) as client:
         response = await client.get(f"{addon_url}/catalog/{type}/{path}")
@@ -175,17 +174,22 @@ async def get_catalog(response: Response, addon_url, type: str, user_settings: s
             return json_response({})
 
         if 'metas' in catalog:
-            if type == 'anime':
-                await remove_duplicates(catalog)
-                tasks = [
-                    tmdb.get_tmdb_data(client, item.get('imdb_id', item.get('id')), "imdb_id", language, tmdb_key)
-                    if item.get("animeType") == "TV" or item.get("animeType") == "movie" else asyncio.sleep(0, result={})
-                    for item in catalog['metas']
-                ]
-            else:
-                tasks = [
-                    tmdb.get_tmdb_data(client, item.get('imdb_id', item.get('id')), "imdb_id", language, tmdb_key) for item in catalog['metas']
-                ]
+            tasks = []
+            for item in catalog['metas']:
+                id = item.get('imdb_id', item.get('id'))
+                cached = tmdb.tmp_cache[language].get(id)
+
+                if cached:
+                    tasks.append(asyncio.sleep(0, result=cached))
+                else:
+                    if type == 'anime':
+                        if item.get("animeType") in ("TV", "movie"):
+                            tasks.append(tmdb.get_tmdb_data(client, id, "imdb_id", language, tmdb_key))
+                        else:
+                            tasks.append(asyncio.sleep(0, result={}))
+                    else:
+                        tasks.append(tmdb.get_tmdb_data(client, id, "imdb_id", language, tmdb_key))
+
             tmdb_details = await asyncio.gather(*tasks)
         else:
             return json_response({})
@@ -203,8 +207,8 @@ async def get_meta(request: Request,response: Response, addon_url, user_settings
 
     addon_url = decode_base64_url(addon_url)
     user_settings = parse_user_settings(user_settings)
-    language = user_settings['language']
-    tmdb_key = user_settings['tmdb_key']
+    language = user_settings.get('language', 'it-IT')
+    tmdb_key = user_settings.get('tmdb_key', None)
 
     async with httpx.AsyncClient(follow_redirects=True, timeout=REQUEST_TIMEOUT) as client:
 
