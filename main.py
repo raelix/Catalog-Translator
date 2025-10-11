@@ -236,7 +236,7 @@ async def get_meta(request: Request,response: Response, addon_url, user_settings
                 if USE_TMDB_ADDON:
                     tmdb_id = await tmdb.convert_imdb_to_tmdb(id, language, tmdb_key)
                     tasks = [
-                        client.get(f"{tmdb_addon_meta_url}/meta/{type}/{tmdb_id}.json") if USE_TMDB_ADDON else meta_builder.build_metadata(id, type, language, tmdb_key),
+                        client.get(f"{tmdb_addon_meta_url}/meta/{type}/{tmdb_id}.json"),
                         client.get(f"{cinemeta_url}/meta/{type}/{id}.json")
                     ]
                     metas = await asyncio.gather(*tasks)
