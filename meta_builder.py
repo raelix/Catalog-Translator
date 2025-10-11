@@ -18,12 +18,12 @@ MAX_TRANSLATE_EPISODES = 20
 with open("anime/tmdb_exceptions.json", "r", encoding="utf-8") as f:
     TMDB_EXCEPTIONS = json.load(f) 
 
-async def build_metadata(id: str, type: str, language: str, tmdb_key: str):
+async def build_metadata(imdb_id: str, type: str, language: str, tmdb_key: str):
     tmdb_id = None
-    if 'tt' in id:
-        tmdb_id = await tmdb.convert_imdb_to_tmdb(id, language, tmdb_key)
-    if 'tmdb:' in id: 
-        tmdb_id = id.replace('tmdb:', '')
+    if 'tt' in imdb_id:
+        tmdb_id = await tmdb.convert_imdb_to_tmdb(imdb_id, language, tmdb_key)
+    if 'tmdb:' in imdb_id: 
+        tmdb_id = imdb_id.replace('tmdb:', '')
     elif tmdb_id != None and 'tmdb:' in tmdb_id:
         tmdb_id = tmdb_id.replace('tmdb:', '')
     elif 'error' in tmdb_id:
@@ -35,15 +35,13 @@ async def build_metadata(id: str, type: str, language: str, tmdb_key: str):
                 "poster": "https://i.imgur.com/Zi5UZV3.png",
                 "type": type
             }
-        }
-    else:
-        return {"meta": {}}
+        }, {}
 
     async with httpx.AsyncClient(follow_redirects=True, timeout=REQUEST_TIMEOUT) as client:
 
         if type == 'movie':
             parse_title = 'title'
-            default_video_id = id
+            default_video_id = imdb_id
             has_scheduled_videos = False
             tasks = [
                 tmdb.get_movie_details(client, tmdb_id, language, tmdb_key),
@@ -59,7 +57,7 @@ async def build_metadata(id: str, type: str, language: str, tmdb_key: str):
                 fanart.get_fanart_series(client, tmdb_id)
             ]
         
-        tasks.append(client.get(f"https://v3-cinemeta.strem.io/meta/{type}/{id}.json"))
+        tasks.append(client.get(f"https://v3-cinemeta.strem.io/meta/{type}/{imdb_id}.json"))
         data = await asyncio.gather(*tasks)
         tmdb_data, fanart_data = data[0], data[1]
         if data[2].status_code == 200:
@@ -69,19 +67,19 @@ async def build_metadata(id: str, type: str, language: str, tmdb_key: str):
         
         # Empty tmdb data
         if len(tmdb_data) == 0:
-            return {"meta": {}}
+            return {"meta": {}}, cinemeta_data
 
         # Invalid TMDB key error
         if tmdb_data.get('error'):
             return { 
-                "meta": {
-                    "id": "error:tmdb-key",
-                    "name": "Invalid TMDB Key",
-                    "description": "Invalid TMDB Key",
-                    "poster": "https://i.imgur.com/Zi5UZV3.png",
-                    "type": type
-                }
-        }
+                    "meta": {
+                        "id": "error:tmdb-key",
+                        "name": "Invalid TMDB Key",
+                        "description": "Invalid TMDB Key",
+                        "poster": "https://i.imgur.com/Zi5UZV3.png",
+                        "type": type
+                    }
+            }, {}
         
         title = tmdb_data.get(parse_title, '')
         poster_path = tmdb_data.get('poster_path', '')
@@ -118,7 +116,7 @@ async def build_metadata(id: str, type: str, language: str, tmdb_key: str):
                 "genres": genres,
                 "releaseInfo": year,
                 "trailerStreams": trailers,
-                "links": build_links(id, title, slug, rating, cast, writers, directors, genres),
+                "links": build_links(imdb_id, title, slug, rating, cast, writers, directors, genres),
                 "behaviorHints": {
                     "defaultVideoId": default_video_id,
                     "hasScheduledVideos": has_scheduled_videos
@@ -127,9 +125,9 @@ async def build_metadata(id: str, type: str, language: str, tmdb_key: str):
         }
 
         if type == 'series':
-            meta['meta']['videos'] = await series_build_episodes(client, id, tmdb_id, tmdb_data.get('seasons', []), tmdb_data['external_ids']['tvdb_id'], tmdb_data['number_of_episodes'], language, tmdb_key)
+            meta['meta']['videos'] = await series_build_episodes(client, imdb_id, tmdb_id, tmdb_data.get('seasons', []), tmdb_data['external_ids']['tvdb_id'], tmdb_data['number_of_episodes'], language, tmdb_key)
 
-        return meta
+        return meta, cinemeta_data
 
 
 async def series_build_episodes(client: httpx.AsyncClient, imdb_id: str, tmdb_id: str, seasons: list, tvdb_series_id: int, tmdb_episodes_count: int, language: str, tmdb_key: str) -> list:

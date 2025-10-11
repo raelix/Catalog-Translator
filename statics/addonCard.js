@@ -77,7 +77,8 @@ function createAddonCard(manifest, url, type="default", appendNow=true) {
     addonCard.appendChild(createAddonHeader(manifest));
     addonCard.appendChild(createAddonDescription(manifest));
     addonCard.appendChild(createAddonVersion(manifest));
-    addonCard.appendChild(createSkipPosterOption(manifest));
+    //addonCard.appendChild(createSkipPosterOption(manifest));
+    addonCard.appendChild(createRPDBOption(manifest));
     addonCard.appendChild(createToastRatingsOption(manifest));
 
     const actionsDiv = document.createElement("div");
@@ -147,6 +148,23 @@ function createSkipPosterOption(manifest) {
     return skipPosterDiv;
 }
 
+function createRPDBOption(manifest) {
+    const rpdbDiv = document.createElement("div");
+    rpdbDiv.className = "rpdb";
+
+    const rpdbCheckbox = document.createElement("input");
+    rpdbCheckbox.type = "checkbox";
+    rpdbCheckbox.id = `rpdb-${manifest.name}`;
+    rpdbDiv.appendChild(rpdbCheckbox);
+
+    const rpdbLabel = document.createElement("label");
+    rpdbLabel.htmlFor = `rpdb-${manifest.name}`;
+    rpdbLabel.innerText = "RPDB Posters";
+    rpdbDiv.appendChild(rpdbLabel);
+
+    return rpdbDiv;
+}
+
 function createToastRatingsOption(manifest) {
     const toastRatingsDiv = document.createElement("div");
     toastRatingsDiv.className = "toast-ratings";
@@ -158,7 +176,7 @@ function createToastRatingsOption(manifest) {
 
     const toastRatingsLabel = document.createElement("label");
     toastRatingsLabel.htmlFor = `toastRatings-${manifest.name}`;
-    toastRatingsLabel.innerText = "Toast Ratings";
+    toastRatingsLabel.innerText = "Toast Ratings Posters";
     toastRatingsDiv.appendChild(toastRatingsLabel);
 
     return toastRatingsDiv;
@@ -202,23 +220,28 @@ function createLinkTextBox(link, manifest) {
 }
 
 function toggleAddonSelection(installBtn, manifest, url) {
-    const spCheckbox = document.getElementById(`skipPoster-${manifest.name}`);
+    //const spCheckbox = document.getElementById(`skipPoster-${manifest.name}`);
+    const rpdbCheckbox = document.getElementById(`rpdb-${manifest.name}`);
     const trCheckbox = document.getElementById(`toastRatings-${manifest.name}`);
     if (installBtn.state === "active") {
         installBtn.state = "not_active";
         installBtn.innerText = "Remove";
         installBtn.style.backgroundColor = "#ff4b4b";
         
-        const skipQuery = spCheckbox.checked ? 1 : 0;
+        //const skipQuery = spCheckbox.checked ? 1 : 0;
+        const rpdbQuery = rpdbCheckbox.checked ? 1 : 0;
         const rateQuery = trCheckbox.checked ? 1 : 0;
-        spCheckbox.disabled = true;
+        //spCheckbox.disabled = true;
+        rpdbCheckbox.disabled = true;
         trCheckbox.disabled = true;
         manifest.transportUrl = url;
-        manifest.skipPoster = skipQuery;
+        //manifest.skipPoster = skipQuery;
+        manifest.rpdb = rpdbQuery;
         manifest.toastRatings = rateQuery;
         transteArray.push(manifest);
     } else {
-        spCheckbox.disabled = false;
+        //spCheckbox.disabled = false;
+        rpdbCheckbox.disabled = false;
         trCheckbox.disabled = false;
         installBtn.state = "active";
         installBtn.innerText = "Select";
@@ -253,12 +276,14 @@ async function generateLinkByCard(manifest, url, linkGeneratorFunc) {
     }
 
     //
-    const spCheckbox = document.getElementById(`skipPoster-${manifest.name}`);
+    //const spCheckbox = document.getElementById(`skipPoster-${manifest.name}`);
+    const rpdbCheckbox = document.getElementById(`rpdb-${manifest.name}`);
     const trCheckbox = document.getElementById(`toastRatings-${manifest.name}`);
     const linkBox = document.getElementById(`linkBox-${manifest.name}`)
-    const skipQuery = spCheckbox.checked ? 1 : 0;
+    //const skipQuery = spCheckbox.checked ? 1 : 0;
+    const rpdbQuery = rpdbCheckbox.checked ? 1 : 0;
     const rateQuery = trCheckbox.checked ? 1 : 0;
-    const link = linkGeneratorFunc(url, skipQuery, rateQuery);
+    const link = linkGeneratorFunc(url, rpdbQuery, rateQuery);
     
     linkBox.value = link;
     linkBox.style.opacity = 100;

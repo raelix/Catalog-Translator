@@ -12,6 +12,7 @@
 - 🎭 [Trakt](https://trakt.dexter21767.com/configure/)
 - 🍣 [Anime Kitsu](https://anime-kitsu.strem.fun/manifest.json)
 - 🍜 [Anime Catalogs](https://1fe84bc728af-stremio-anime-catalogs.baby-beamup.club/configure)
+- 🦸‍♂️ [Marvel Catalogs](https://addon-marvel.onrender.com/manifest.json)
 
 ---
 
@@ -24,8 +25,8 @@
 ---
 
 ## ❓ Configuration Notes
-- 🖼️ **Skip poster** → needed if the original catalog supports RPDB posters
-- ⭐ **Toast Ratings** → posters with ratings
+- 🖼️ **RPDB** → RPDB posters in English with free key, in selected language if tier is greater than 0
+- ⭐ **Toast Ratings** → free posters with ratings in selected language
 
 ---
 

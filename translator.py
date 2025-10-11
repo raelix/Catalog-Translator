@@ -89,7 +89,7 @@ async def translate_episodes_with_api(client: httpx.AsyncClient, episodes: list[
     return episodes
 
 
-def translate_catalog(original: dict, tmdb_meta: dict, skip_poster, toast_ratings, language: str) -> dict:
+def translate_catalog(original: dict, tmdb_meta: dict, skip_poster, toast_ratings, rpdb, rpdb_key, language: str) -> dict:
     new_catalog = original
 
     for i, item in enumerate(new_catalog['metas']):
@@ -100,10 +100,16 @@ def translate_catalog(original: dict, tmdb_meta: dict, skip_poster, toast_rating
                 type_key = 'movie' if type == 'movie' else 'tv'
                 detail = tmdb_meta[i][f"{type_key}_results"][0]
             except:
-                # Set poster if contend not have tmdb informations
+                # Set poster if content not have tmdb informations
                 if toast_ratings == '1':
                     if 'tt' in tmdb_meta[i].get('imdb_id', ''):
                         item['poster'] = f"{RATINGS_SERVER}/{item['type']}/get_poster/{language}/{tmdb_meta[i]['imdb_id']}.jpg"
+                elif rpdb == '1':
+                        if 'tt' in tmdb_meta[i].get('imdb_id', ''):
+                            if 't0' in rpdb_key:
+                                item['poster'] = f"https://api.ratingposterdb.com/{rpdb_key}/imdb/poster-default/{tmdb_meta[i]['imdb_id']}.jpg"
+                            else:
+                                item['poster'] = f"https://api.ratingposterdb.com/{rpdb_key}/imdb/poster-default/{tmdb_meta[i]['imdb_id']}.jpg?lang={language.split('-')[0]}"
 
             else:
                 try: item['name'] = detail['title'] if type == 'movie' else detail['name']
@@ -115,14 +121,18 @@ def translate_catalog(original: dict, tmdb_meta: dict, skip_poster, toast_rating
                 try: item['background'] = tmdb.TMDB_BACK_URL + detail['backdrop_path']
                 except: pass
 
-                if skip_poster == '0':
-                    try: 
-                        if toast_ratings == '1':
-                            item['poster'] = f"{RATINGS_SERVER}/{item['type']}/get_poster/{language}/{tmdb_meta[i]['imdb_id']}.jpg"
+                try: 
+                    if toast_ratings == '1':
+                        item['poster'] = f"{RATINGS_SERVER}/{item['type']}/get_poster/{language}/{tmdb_meta[i]['imdb_id']}.jpg"
+                    elif rpdb == '1':
+                        if 't0' in rpdb_key:
+                            item['poster'] = f"https://api.ratingposterdb.com/{rpdb_key}/imdb/poster-default/{tmdb_meta[i]['imdb_id']}.jpg"
                         else:
-                            item['poster'] = tmdb.TMDB_POSTER_URL + detail['poster_path']
-                    except Exception as e: 
-                        print(e)
+                            item['poster'] = f"https://api.ratingposterdb.com/{rpdb_key}/imdb/poster-default/{tmdb_meta[i]['imdb_id']}.jpg?lang={language.split('-')[0]}"
+                    else:
+                        item['poster'] = tmdb.TMDB_POSTER_URL + detail['poster_path']
+                except Exception as e: 
+                    print(e)
         # Error
         else:
             item['name'] = 'Invalid TMDB Key'

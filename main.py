@@ -18,7 +18,7 @@ import json
 import os
 
 # Settings
-translator_version = 'v0.1.6'
+translator_version = 'v0.1.7'
 FORCE_PREFIX = False
 FORCE_META = False
 USE_TMDB_ID_META = True
@@ -155,9 +155,16 @@ async def get_manifest(addon_url, user_settings):
 
 @app.get("/{addon_url}/{user_settings}/catalog/{type}/{path:path}")
 async def get_catalog(response: Response, addon_url, type: str, user_settings: str, path: str):
+    # User settings
     user_settings = parse_user_settings(user_settings)
     language = user_settings.get('language', 'it-IT')
     tmdb_key = user_settings.get('tmdb_key', None)
+    rpdb = user_settings.get('rpdb', 'true')
+    rpdb_key = user_settings.get('rpdb_key', 't0-free-rpdb')
+    toast_ratings = user_settings.get('tr', '0')
+    skip_poster = user_settings.get('sp', '0')
+
+    # Convert addon base64 url
     addon_url = decode_base64_url(addon_url)
 
     async with httpx.AsyncClient(follow_redirects=True, timeout=REQUEST_TIMEOUT) as client:
@@ -170,8 +177,11 @@ async def get_catalog(response: Response, addon_url, type: str, user_settings: s
         try:
             catalog = response.json()
         except:
-            print(response.text)
+            print(f"Error on load catalog: {response.status_code}")
             return json_response({})
+        
+        if type == 'anime':
+            await remove_duplicates(catalog)
 
         if 'metas' in catalog:
             tasks = []
@@ -194,7 +204,7 @@ async def get_catalog(response: Response, addon_url, type: str, user_settings: s
         else:
             return json_response({})
 
-    new_catalog = translator.translate_catalog(catalog, tmdb_details, user_settings['sp'], user_settings['tr'], language)
+    new_catalog = translator.translate_catalog(catalog, tmdb_details, skip_poster, toast_ratings, rpdb, rpdb_key, language)
     return json_response(new_catalog)
 
 
@@ -223,14 +233,14 @@ async def get_meta(request: Request,response: Response, addon_url, user_settings
         else:
             # Handle imdb ids
             if 'tt' in id:
-                tmdb_id = await tmdb.convert_imdb_to_tmdb(id, language, tmdb_key)
-                tasks = [
-                    client.get(f"{tmdb_addon_meta_url}/meta/{type}/{tmdb_id}.json") if USE_TMDB_ADDON else meta_builder.build_metadata(id, type, language, tmdb_key),
-                    client.get(f"{cinemeta_url}/meta/{type}/{id}.json")
-                ]
-                metas = await asyncio.gather(*tasks)
-                
                 if USE_TMDB_ADDON:
+                    tmdb_id = await tmdb.convert_imdb_to_tmdb(id, language, tmdb_key)
+                    tasks = [
+                        client.get(f"{tmdb_addon_meta_url}/meta/{type}/{tmdb_id}.json") if USE_TMDB_ADDON else meta_builder.build_metadata(id, type, language, tmdb_key),
+                        client.get(f"{cinemeta_url}/meta/{type}/{id}.json")
+                    ]
+                    metas = await asyncio.gather(*tasks)
+                
                     # TMDB addon retry and switch addon
                     for retry in range(6):
                         if metas[0].status_code == 200:
@@ -243,13 +253,15 @@ async def get_meta(request: Request,response: Response, addon_url, user_settings
                             if metas[0].status_code == 200:
                                 tmdb_meta = metas[0].json()
                                 break
-                else:
                     tmdb_meta = metas[0]
 
-                if metas[1].status_code == 200:
-                    cinemeta_meta = metas[1].json()
+                    if metas[1].status_code == 200:
+                        cinemeta_meta = metas[1].json()
+                    else:
+                        cinemeta_meta = {}
                 else:
-                    cinemeta_meta = {}
+                    # Not use TMDB Addon
+                    tmdb_meta, cinemeta_meta = await  meta_builder.build_metadata(id, type, language, tmdb_key)
                 
                 # Not empty tmdb meta
                 if len(tmdb_meta.get('meta', [])) > 0:
@@ -334,7 +346,7 @@ async def get_meta(request: Request,response: Response, addon_url, user_settings
                                 tmdb_addon_meta_url = tmdb_addons_pool[(index + 1) % len(tmdb_addons_pool)]
                                 print(f"Switch to {tmdb_addon_meta_url}")
                     else:
-                        meta = await meta_builder.build_metadata(imdb_id, type, language, tmdb_key)
+                        meta, cinemeta_meta = await meta_builder.build_metadata(imdb_id, type, language, tmdb_key)
 
                     if len(meta['meta']) > 0:
                         if type == 'movie':
