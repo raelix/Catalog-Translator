@@ -30,8 +30,8 @@ const compatibilityList = [
     //"com.sagetendo.mal-stremio-addon",  // MAL Addon
     "dev.filmwhisper.",                 // AI Film Whisper
     "community.anime.kitsu.search",     // Kitsu search addon
-    "com.joaogonp.marveladdon",         // Marvel addon
-    "org.stremio.aiolists"              //AIO Lists
+    "com.joaogonp.marveladdon"         // Marvel addon
+    //"org.stremio.aiolists"              //AIO Lists
 ]
 
 
