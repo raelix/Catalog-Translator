@@ -381,9 +381,13 @@ async def get_meta(request: Request,response: Response, addon_url, user_settings
                     if type == 'series' and videos:
                         meta['meta']['videos'] = translations[idx]
 
-            # Not compatible id -> redirect to original addon
+            # Handle TMDB ids
+            elif 'tmdb' in id:
+                meta, placeholder = await meta_builder.build_metadata(id, type, language, tmdb_key)
+            # Not compatible id
             else:
-                return RedirectResponse(f"{addon_url}/meta/{type}/{id}.json")
+                response = await client.get(f"{addon_url}/meta/{type}/{id}.json")
+                return json_response(response.json())
 
 
             meta['meta']['id'] = id
