@@ -37,7 +37,8 @@ LANGUAGE_FLAGS = {
     "zh-CN": "🇨🇳",
     "ko-KR": "🇰🇷",
     "ar-SA": "🇸🇦",
-    "hi-IN": "🇮🇳"
+    "hi-IN": "🇮🇳",
+    "ro-RO": "🇷🇴"
 }
 
 # For metabuilder
@@ -53,7 +54,8 @@ EPISODE_TRANSLATIONS = {
     "zh-CN": "集",
     "ko-KR": "에피소드",
     "ar-SA": "حلقة",
-    "hi-IN": "एपिसोड"
+    "hi-IN": "एपिसोड",
+    "ro-RO": "Episod"
 }
 
 
