@@ -328,7 +328,7 @@ async def get_meta(request: Request,response: Response, addon_url, user_settings
                     imdb_id, is_converted = await mal.convert_to_imdb(meta['meta']['id'].replace('_',':'), meta['meta']['type'])
                 meta['meta']['imdb_id'] = imdb_id
                 anime_type = meta['meta'].get('animeType', None)
-                is_converted = imdb_id != None and (anime_type == 'TV' or anime_type == 'movie')
+                is_converted = imdb_id != None and 'tt' in imdb_id and (anime_type == 'TV' or anime_type == 'movie')
 
                 # Handle converted ids (TV and movies)
                 if is_converted:
@@ -473,6 +473,8 @@ async def remove_duplicates(catalog) -> None:
             imdb_id, is_converted = await kitsu.convert_to_imdb(item['id'], item['type'])
         elif 'mal_' in item['id']:
             imdb_id, is_converted = await mal.convert_to_imdb(item['id'].replace('_',':'), item['type'])
+        elif 'tt' in item['id']:
+            imdb_id = item['id']
         item['imdb_id'] = imdb_id
 
         # Add special, ona, ova, movies
