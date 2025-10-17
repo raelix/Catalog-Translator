@@ -18,7 +18,7 @@ import json
 import os
 
 # Settings
-translator_version = 'v0.1.7'
+translator_version = 'v0.1.8'
 FORCE_PREFIX = False
 FORCE_META = False
 USE_TMDB_ID_META = True
@@ -30,7 +30,7 @@ COMPATIBILITY_ID = ['tt', 'kitsu', 'mal']
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
 
 # Load languages
-with open("languages.json", "r", encoding="utf-8") as f:
+with open("languages/languages.json", "r", encoding="utf-8") as f:
     LANGUAGES = json.load(f) 
 
 # Cache set
@@ -451,6 +451,12 @@ async def clean_cache(password: str = Query(...)):
 @app.get('/addon-logo.png')
 async def get_poster_placeholder():
     return FileResponse("statics/img/toast-translator-logo.png", media_type="image/png")
+
+# Languages
+@app.get('/languages.json')
+async def get_languages():
+    with open("languages/languages.json", "r", encoding="utf-8") as f:
+        return json_response(json.load(f))
 
 
 def decode_base64_url(encoded_url):

@@ -12,8 +12,12 @@ translations_cache = Cache('./cache/translation/tmp')
 translations_cache.clear()
 
 # Load languages
-with open("languages.json", "r", encoding="utf-8") as f:
+with open("languages/languages.json", "r", encoding="utf-8") as f:
     LANGUAGES = json.load(f) 
+with open("languages/lang_flags.json", "r", encoding="utf-8") as f:
+    LANGUAGE_FLAGS = json.load(f) 
+with open("languages/lang_episode.json", "r", encoding="utf-8") as f:
+    EPISODE_TRANSLATIONS = json.load(f) 
 
 # Cache set
 translations_cache = {}
@@ -23,40 +27,6 @@ for language in LANGUAGES:
 
 # Poster ratings
 RATINGS_SERVER = os.getenv('TR_SERVER', 'https://ca6771aaa821-toast-ratings.baby-beamup.club')
-
-# Language flags converter
-LANGUAGE_FLAGS = {
-    "it-IT": "🇮🇹",
-    "es-ES": "🇪🇸",
-    "fr-FR": "🇫🇷",
-    "de-DE": "🇩🇪",
-    "pt-PT": "🇵🇹",
-    "pt-BR": "🇧🇷",
-    "ru-RU": "🇷🇺",
-    "ja-JP": "🇯🇵",
-    "zh-CN": "🇨🇳",
-    "ko-KR": "🇰🇷",
-    "ar-SA": "🇸🇦",
-    "hi-IN": "🇮🇳",
-    "ro-RO": "🇷🇴"
-}
-
-# For metabuilder
-EPISODE_TRANSLATIONS = {
-    "it-IT": "Episodio",
-    "es-ES": "Episodio",
-    "fr-FR": "Épisode",
-    "de-DE": "Episode",
-    "pt-PT": "Episódio",
-    "pt-BR": "Episódio",
-    "ru-RU": "Эпизод",
-    "ja-JP": "エピソード",
-    "zh-CN": "集",
-    "ko-KR": "에피소드",
-    "ar-SA": "حلقة",
-    "hi-IN": "एपिसोड",
-    "ro-RO": "Episod"
-}
 
 
 async def translate_with_api(client: httpx.AsyncClient, text: str, language: str, source='en') -> str:

@@ -15,7 +15,7 @@ TMDB_API_KEY = os.getenv('TMDB_API_KEY')
 TMDB_SEMAPHORE = asyncio.Semaphore(50)
 
 # Load languages
-with open("languages.json", "r", encoding="utf-8") as f:
+with open("languages/languages.json", "r", encoding="utf-8") as f:
     LANGUAGES = json.load(f) 
 
 # Cache set
