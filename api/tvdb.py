@@ -3,6 +3,7 @@ from datetime import timedelta
 import httpx
 import asyncio
 import os
+import json
 
 #from dotenv import load_dotenv
 #load_dotenv()
@@ -16,20 +17,9 @@ IMAGE_URL = "https://thetvdb.com"
 EPISODE_PAGE = 500
 
 # TVDB language map
-LANGUAGE_MAP = {
-    "it-IT": "ita",
-    "es-ES": "spa",
-    "fr-FR": "fra",
-    "de-DE": "deu",
-    "pt-PT": "por",
-    "pt-BR": "por-BR",
-    "ru-RU": "rus",
-    "ja-JP": "jpn",
-    "zh-CN": "chi",
-    "ko-KR": "kor",
-    "ar-SA": "ara",
-    "hi-IN": "hin"
-}
+with open("languages/lang_tvdb.json", "r", encoding="utf-8") as f:
+    LANGUAGE_MAP = json.load(f) 
+
 
 # Cache set
 #token_cache = Cache(maxsize=1, ttl=timedelta(days=29).total_seconds())
