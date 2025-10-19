@@ -55,7 +55,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 templates = Jinja2Templates(directory="templates")
-app.mount("/statics", StaticFiles(directory="statics"), name="statics")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 stremio_headers = {
