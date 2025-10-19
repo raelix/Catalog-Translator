@@ -81,6 +81,10 @@ function createAddonCard(manifest, url, type="default", appendNow=true) {
     //addonCard.appendChild(createSkipPosterOption(manifest));
     addonCard.appendChild(createRPDBOption(manifest));
     addonCard.appendChild(createToastRatingsOption(manifest));
+    addonCard.appendChild(createTopStreamPosterOption(manifest));
+
+    // Rende checkbox esclusive
+    makePosterOptionsExclusive(addonCard);
 
     const actionsDiv = document.createElement("div");
     actionsDiv.className = "addon-actions";
@@ -183,6 +187,23 @@ function createToastRatingsOption(manifest) {
     return toastRatingsDiv;
 }
 
+function createTopStreamPosterOption(manifest) {
+    const tsPosterDiv = document.createElement("div");
+    tsPosterDiv.className = "tsPoster";
+
+    const tsPosterCheckbox = document.createElement("input");
+    tsPosterCheckbox.type = "checkbox";
+    tsPosterCheckbox.id = `tsPoster-${manifest.name}`;
+    tsPosterDiv.appendChild(tsPosterCheckbox);
+
+    const tsPosterLabel = document.createElement("label");
+    tsPosterLabel.htmlFor = `tsPoster-${manifest.name}`;
+    tsPosterLabel.innerText = "Top Streaming Posters";
+    tsPosterDiv.appendChild(tsPosterLabel);
+
+    return tsPosterDiv;
+}
+
 function createInstallButton(manifest, url) {
     const installBtn = document.createElement("button");
     installBtn.className = "install-btn";
@@ -224,6 +245,7 @@ function toggleAddonSelection(installBtn, manifest, url) {
     //const spCheckbox = document.getElementById(`skipPoster-${manifest.name}`);
     const rpdbCheckbox = document.getElementById(`rpdb-${manifest.name}`);
     const trCheckbox = document.getElementById(`toastRatings-${manifest.name}`);
+    const tsCheckbox = document.getElementById(`tsPoster-${manifest.name}`)
     if (installBtn.state === "active") {
         installBtn.state = "not_active";
         installBtn.innerText = "Remove";
@@ -232,18 +254,22 @@ function toggleAddonSelection(installBtn, manifest, url) {
         //const skipQuery = spCheckbox.checked ? 1 : 0;
         const rpdbQuery = rpdbCheckbox.checked ? 1 : 0;
         const rateQuery = trCheckbox.checked ? 1 : 0;
+        const tsQuery = tsCheckbox.checked ? 1 : 0;
         //spCheckbox.disabled = true;
         rpdbCheckbox.disabled = true;
         trCheckbox.disabled = true;
+        tsCheckbox.disabled = true;
         manifest.transportUrl = url;
         //manifest.skipPoster = skipQuery;
         manifest.rpdb = rpdbQuery;
         manifest.toastRatings = rateQuery;
+        manifest.tsPoster = tsQuery;
         transteArray.push(manifest);
     } else {
         //spCheckbox.disabled = false;
         rpdbCheckbox.disabled = false;
         trCheckbox.disabled = false;
+        tsCheckbox.disabled = false;
         installBtn.state = "active";
         installBtn.innerText = "Select";
         installBtn.style.backgroundColor = "#2ecc71";
@@ -280,14 +306,33 @@ async function generateLinkByCard(manifest, url, linkGeneratorFunc) {
     //const spCheckbox = document.getElementById(`skipPoster-${manifest.name}`);
     const rpdbCheckbox = document.getElementById(`rpdb-${manifest.name}`);
     const trCheckbox = document.getElementById(`toastRatings-${manifest.name}`);
+    const tsCheckbox = document.getElementById(`tsPoster-${manifest.name}`);
     const linkBox = document.getElementById(`linkBox-${manifest.name}`)
     //const skipQuery = spCheckbox.checked ? 1 : 0;
     const rpdbQuery = rpdbCheckbox.checked ? 1 : 0;
     const rateQuery = trCheckbox.checked ? 1 : 0;
-    const link = linkGeneratorFunc(url, rpdbQuery, rateQuery);
+    const tsQuery = tsCheckbox.checked ? 1 : 0;
+    const link = linkGeneratorFunc(url, rpdbQuery, rateQuery, tsQuery);
     
     linkBox.value = link;
     linkBox.style.opacity = 100;
     linkBox.style.height = "auto";
     linkBox.style.height = (linkBox.scrollHeight) + "px";
+}
+
+
+function makePosterOptionsExclusive(addonCard) {
+    const posterCheckboxes = addonCard.querySelectorAll(
+        '.rpdb input, .toast-ratings input, .tsPoster input'
+    );
+
+    posterCheckboxes.forEach(chk => {
+        chk.addEventListener('change', () => {
+            if (chk.checked) {
+                posterCheckboxes.forEach(other => {
+                    if (other !== chk) other.checked = false;
+                });
+            }
+        });
+    });
 }

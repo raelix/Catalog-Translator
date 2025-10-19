@@ -201,15 +201,31 @@ button:hover {
 .addon-logo { max-width: 60px; max-height: 60px; border-radius: 9px; margin-right: 10px; box-shadow: 0 0 12px rgba(0,255,240,0.2); }
 .addon-header { display: flex; align-items: center; flex-wrap: wrap; }
 
-.skip-poster { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
-.skip-poster input { accent-color: var(--neon-cyan); width: 18px; height: 18px; }
-.skip-poster label { font-size: 13px; color: var(--text); opacity: 0.9; }
-.rpdb { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
-.rpdb input { accent-color: var(--neon-cyan); width: 18px; height: 18px; }
-.rpdb label { font-size: 13px; color: var(--text); opacity: 0.9; }
-.toast-ratings { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
-.toast-ratings input { accent-color: var(--neon-cyan); width: 18px; height: 18px; }
-.toast-ratings label { font-size: 13px; color: var(--text); opacity: 0.9; }
+.tsPoster,
+.rpdb,
+.toast-ratings {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.tsPoster input,
+.rpdb input,
+.toast-ratings input {
+  accent-color: var(--neon-cyan);
+  width: 18px;
+  height: 18px;
+}
+
+.tsPoster label,
+.rpdb label,
+.toast-ratings label {
+  font-size: 13px;
+  color: var(--text);
+  opacity: 0.9;
+}
+
 
 textarea {
     opacity: 0;

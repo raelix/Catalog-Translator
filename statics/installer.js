@@ -35,7 +35,7 @@ async function translateSelected(authKey, selectList) {
     for (var j = 0; j < selectList.length; j++) {
         for (var i = 0; i < addons.length; i++) {
             if (selectList[j].id == addons[i].manifest.id) {
-                var addonUrl = await generateTranslatorLink(addons[i].transportUrl, selectList[j].rpdb, selectList[j].toastRatings);
+                var addonUrl = await generateTranslatorLink(addons[i].transportUrl, selectList[j].rpdb, selectList[j].toastRatings, selectList[j].tsPoster);
                 var response = await fetch(addonUrl);
                 var tranlatorManifest = await response.json();
                 addons[i] = {
@@ -50,7 +50,7 @@ async function translateSelected(authKey, selectList) {
             }
         }
         // Add new addon
-        var addonUrl = await generateTranslatorLink(selectList[j].transportUrl, selectList[j].rpdb, selectList[j].toastRatings);
+        var addonUrl = await generateTranslatorLink(selectList[j].transportUrl, selectList[j].rpdb, selectList[j].toastRatings, selectList[j].tsPoster);
         var response = await fetch(addonUrl);
         var tranlatorManifest = await response.json();
         addons[i] = {
@@ -79,7 +79,7 @@ async function reloadAddons(authKey) {
     await stremioLoadAddons(authKey);
 }
 
-function generateTranslatorLink(addonUrl, rpdb, toast_ratings) {
+function generateTranslatorLink(addonUrl, rpdb, toast_ratings, tsPoster) {
     const serverUrl = window.location.origin;
     const baseAddonUrl = getBaseUrl(addonUrl).replace("/manifest.json", "");
     const urlEncoded = btoa(baseAddonUrl);
@@ -89,7 +89,7 @@ function generateTranslatorLink(addonUrl, rpdb, toast_ratings) {
     if (!rpdbKey) {
         rpdbKey = "t0-free-rpdb";
     }
-    const userSettings = `rpdb=${rpdb},tr=${toast_ratings},language=${language},tmdb_key=${tmdbApiKey},rpdb_key=${rpdbKey}`;
+    const userSettings = `rpdb=${rpdb},tr=${toast_ratings},tsp=${tsPoster},language=${language},tmdb_key=${tmdbApiKey},rpdb_key=${rpdbKey}`;
     
     if (addonUrl.includes(serverUrl)) {
         const addonBase64String = addonUrl.split("/")[3];

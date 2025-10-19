@@ -18,11 +18,12 @@ import json
 import os
 
 # Settings
-translator_version = 'v0.1.8'
+translator_version = 'v0.1.9'
 FORCE_PREFIX = False
 FORCE_META = False
 USE_TMDB_ID_META = True
 USE_TMDB_ADDON = False
+TRANSLATE_CATALOG_NAME = False
 REQUEST_TIMEOUT = 120
 COMPATIBILITY_ID = ['tt', 'kitsu', 'mal']
 
@@ -138,6 +139,14 @@ async def get_manifest(addon_url, user_settings):
             manifest['description'] += f" | Translated by Toast Translator. {translator_version}"
         else:
             manifest['description'] = f"Translated by Toast Translator. {translator_version}"
+
+        # Translate catalog names
+        if TRANSLATE_CATALOG_NAME:
+            async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT) as client:
+                tasks = [ translator.translate_with_api(client, catalog['name'], manifest['t_language']) for catalog in manifest['catalogs'] ]
+                translations =  await asyncio.gather(*tasks)
+                for i, catalog in enumerate(manifest['catalogs']):
+                    catalog['name'] = translations[i]
     
     if FORCE_PREFIX:
         if 'idPrefixes' in manifest:
@@ -162,7 +171,7 @@ async def get_catalog(response: Response, addon_url, type: str, user_settings: s
     rpdb = user_settings.get('rpdb', 'true')
     rpdb_key = user_settings.get('rpdb_key', 't0-free-rpdb')
     toast_ratings = user_settings.get('tr', '0')
-    skip_poster = user_settings.get('sp', '0')
+    top_stream_poster = user_settings.get('tsp', '0')
 
     # Convert addon base64 url
     addon_url = decode_base64_url(addon_url)
@@ -204,7 +213,7 @@ async def get_catalog(response: Response, addon_url, type: str, user_settings: s
         else:
             return json_response({})
 
-    new_catalog = translator.translate_catalog(catalog, tmdb_details, skip_poster, toast_ratings, rpdb, rpdb_key, language)
+    new_catalog = translator.translate_catalog(catalog, tmdb_details, top_stream_poster, toast_ratings, rpdb, rpdb_key, language)
     return json_response(new_catalog)
 
 

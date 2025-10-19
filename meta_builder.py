@@ -111,7 +111,7 @@ async def build_metadata(imdb_id: str, type: str, language: str, tmdb_key: str):
                 "poster": tmdb.TMDB_POSTER_URL + poster_path if poster_path else None,
                 "background": tmdb.TMDB_BACK_URL + backdrop_path if backdrop_path else None,
                 "logo": logo,
-                "runtime": str(tmdb_data.get('runtime','')) + ' min' if type == 'movie' else extract_series_episode_runtime(tmdb_data),
+                "runtime": str(tmdb_data.get('runtime','')) + ' min' if type == 'movie' else extract_series_episode_runtime(tmdb_data, cinemeta_data),
                 "id": 'tmdb:' + str(tmdb_data.get('id', '')),
                 "genres": genres,
                 "releaseInfo": year,
@@ -206,12 +206,16 @@ async def series_build_episodes(client: httpx.AsyncClient, imdb_id: str, tmdb_id
     return videos
 
 
-def extract_series_episode_runtime(tmdb_data: dict) -> str:
+def extract_series_episode_runtime(tmdb_data: dict, cinemeta_data: dict) -> str:
     runtime = 0
     if len(tmdb_data.get('episode_run_time', [])) > 0:
         runtime = tmdb_data['episode_run_time'][0]
     else:
         runtime = (tmdb_data.get('last_episode_to_air') or {}).get('runtime', 'N/A')
+
+    # Cinemeta fallback
+    if not runtime:
+        return cinemeta_data.get('meta', {}).get('runtime', 0)
 
     return str(runtime) + ' min'
 
