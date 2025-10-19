@@ -26,11 +26,17 @@ body {
     color: var(--text);
     min-height: 100vh;
     margin: 0;
+    
+    /* 💡 Fix: layout verticale */
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+
+    overflow-x: hidden;
+    overflow-y: auto;
 }
+
 
 .container {
     width: 100%;
@@ -83,6 +89,23 @@ body {
     gap: 12px; 
     width: 100%; 
 }
+
+.donation {
+  margin-top: 30px;
+  text-align: center;
+}
+
+.donation img {
+  height: 36px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.donation img:hover {
+  transform: scale(1.05);
+}
+
 
 
 input[type="email"],
