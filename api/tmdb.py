@@ -1,5 +1,6 @@
 from cache import Cache
 from datetime import timedelta
+from collections import defaultdict
 import httpx
 import os
 import asyncio
@@ -12,7 +13,7 @@ TMDB_POSTER_URL = 'https://image.tmdb.org/t/p/w500'
 TMDB_BACK_URL = 'https://image.tmdb.org/t/p/original'
 TMDB_API_KEY = os.getenv('TMDB_API_KEY')
 
-TMDB_SEMAPHORE = asyncio.Semaphore(50)
+TMDB_SEMAPHORES = defaultdict(lambda: asyncio.Semaphore(50))
 
 # Load languages
 with open("languages/languages.json", "r", encoding="utf-8") as f:
@@ -30,8 +31,9 @@ async def fetch_and_retry(client: httpx.AsyncClient, id: str, url: str, language
     headers = {
         "accept": "application/json"
     }
-
-    async with TMDB_SEMAPHORE:
+    tmdb_api_key = params.get('api_key', None)
+    semaphore = TMDB_SEMAPHORES[tmdb_api_key]
+    async with semaphore:
         for attempt in range(1, max_retries + 1):
             response = await client.get(url, headers=headers, params=params)
 
