@@ -28,7 +28,7 @@ def merge(tmdb: dict, cinemeta: dict) -> dict:
         if key not in ['imdb_id', 'videos', 'imdbRating']:
             new_meta['meta'][key] = tmdb['meta'][key]
 
-        elif key == 'videos' and len(cinemeta['meta']['videos']) > len(tmdb['meta']['videos']):
+        elif key == 'videos' and len(cinemeta['meta'].get('videos', [])) > len(tmdb['meta'].get('videos', [])):
             new_videos = merge_videos(cinemeta['meta']['videos'], tmdb['meta']['videos'])
 
     return new_meta, new_videos

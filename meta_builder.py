@@ -18,25 +18,33 @@ MAX_TRANSLATE_EPISODES = 20
 with open("anime/tmdb_exceptions.json", "r", encoding="utf-8") as f:
     TMDB_EXCEPTIONS = json.load(f) 
 
-async def build_metadata(id: str, type: str):
+async def build_metadata(imdb_id: str, type: str, language: str, tmdb_key: str):
     tmdb_id = None
-    if 'tt' in id:
-        tmdb_id = await tmdb.convert_imdb_to_tmdb(id)
-    if 'tmdb:' in id: 
-        tmdb_id = id.replace('tmdb:', '')
+    if 'tt' in imdb_id:
+        tmdb_id = await tmdb.convert_imdb_to_tmdb(imdb_id, language, tmdb_key)
+    if 'tmdb:' in imdb_id: 
+        tmdb_id = imdb_id.replace('tmdb:', '')
     elif tmdb_id != None and 'tmdb:' in tmdb_id:
         tmdb_id = tmdb_id.replace('tmdb:', '')
-    else:
-        return {"meta": {}}
+    elif 'error' in tmdb_id:
+        return { 
+            "meta": {
+                "id": "error:tmdb-key",
+                "name": "Invalid TMDB Key",
+                "description": "Invalid TMDB Key",
+                "poster": "https://i.imgur.com/Zi5UZV3.png",
+                "type": type
+            }
+        }, {}
 
     async with httpx.AsyncClient(follow_redirects=True, timeout=REQUEST_TIMEOUT) as client:
 
         if type == 'movie':
             parse_title = 'title'
-            default_video_id = id
+            default_video_id = imdb_id
             has_scheduled_videos = False
             tasks = [
-                tmdb.get_movie_details(client, tmdb_id),
+                tmdb.get_movie_details(client, tmdb_id, language, tmdb_key),
                 fanart.get_fanart_movie(client, tmdb_id)
             ]
 
@@ -45,25 +53,39 @@ async def build_metadata(id: str, type: str):
             default_video_id = None
             has_scheduled_videos = True
             tasks = [
-                tmdb.get_series_details(client, tmdb_id),
+                tmdb.get_series_details(client, tmdb_id, language, tmdb_key),
                 fanart.get_fanart_series(client, tmdb_id)
             ]
         
-        tasks.append(client.get(f"https://v3-cinemeta.strem.io/meta/{type}/{id}.json"))
+        tasks.append(client.get(f"https://v3-cinemeta.strem.io/meta/{type}/{imdb_id}.json"))
         data = await asyncio.gather(*tasks)
         tmdb_data, fanart_data = data[0], data[1]
         if data[2].status_code == 200:
             cinemeta_data = data[2].json()
         else:
             cinemeta_data = {'meta': {}}
+        
+        # Empty tmdb data
         if len(tmdb_data) == 0:
-            return {"meta": {}}
+            return {"meta": {}}, cinemeta_data
+
+        # Invalid TMDB key error
+        if tmdb_data.get('error'):
+            return { 
+                    "meta": {
+                        "id": "error:tmdb-key",
+                        "name": "Invalid TMDB Key",
+                        "description": "Invalid TMDB Key",
+                        "poster": "https://i.imgur.com/Zi5UZV3.png",
+                        "type": type
+                    }
+            }, {}
         
         title = tmdb_data.get(parse_title, '')
         poster_path = tmdb_data.get('poster_path', '')
         backdrop_path = tmdb_data.get('backdrop_path', '')
         slug = f"{type}/{title.lower().replace(' ', '-')}-{tmdb_data.get('imdb_id', '').replace('tt', '')}"
-        logo = extract_logo(fanart_data, tmdb_data, cinemeta_data)
+        logo = extract_logo(fanart_data, tmdb_data, cinemeta_data, language)
         directors, writers= extract_crew(tmdb_data)
         cast = extract_cast(tmdb_data)
         genres = extract_genres(tmdb_data)
@@ -89,12 +111,12 @@ async def build_metadata(id: str, type: str):
                 "poster": tmdb.TMDB_POSTER_URL + poster_path if poster_path else None,
                 "background": tmdb.TMDB_BACK_URL + backdrop_path if backdrop_path else None,
                 "logo": logo,
-                "runtime": str(tmdb_data.get('runtime','')) + ' min' if type == 'movie' else extract_series_episode_runtime(tmdb_data),
+                "runtime": str(tmdb_data.get('runtime','')) + ' min' if type == 'movie' else extract_series_episode_runtime(tmdb_data, cinemeta_data),
                 "id": 'tmdb:' + str(tmdb_data.get('id', '')),
                 "genres": genres,
                 "releaseInfo": year,
                 "trailerStreams": trailers,
-                "links": build_links(id, title, slug, rating, cast, writers, directors, genres),
+                "links": build_links(imdb_id, title, slug, rating, cast, writers, directors, genres),
                 "behaviorHints": {
                     "defaultVideoId": default_video_id,
                     "hasScheduledVideos": has_scheduled_videos
@@ -103,18 +125,18 @@ async def build_metadata(id: str, type: str):
         }
 
         if type == 'series':
-            meta['meta']['videos'] = await series_build_episodes(client, id, tmdb_id, tmdb_data.get('seasons', []), tmdb_data['external_ids']['tvdb_id'], tmdb_data['number_of_episodes'])
+            meta['meta']['videos'] = await series_build_episodes(client, imdb_id, tmdb_id, tmdb_data.get('seasons', []), tmdb_data['external_ids']['tvdb_id'], tmdb_data['number_of_episodes'], language, tmdb_key)
 
-        return meta
+        return meta, cinemeta_data
 
 
-async def series_build_episodes(client: httpx.AsyncClient, imdb_id: str, tmdb_id: str, seasons: list, tvdb_series_id: int, tmdb_episodes_count: int) -> list:
+async def series_build_episodes(client: httpx.AsyncClient, imdb_id: str, tmdb_id: str, seasons: list, tvdb_series_id: int, tmdb_episodes_count: int, language: str, tmdb_key: str) -> list:
     tasks = []
     videos = []
 
     # Fetch TMDB request for seasons details
     for season in seasons:
-        tasks.append(tmdb.get_season_details(client, tmdb_id, season['season_number']))
+        tasks.append(tmdb.get_season_details(client, tmdb_id, season['season_number'], language, tmdb_key))
 
     tmdb_seasons = await asyncio.gather(*tasks)
 
@@ -127,7 +149,7 @@ async def series_build_episodes(client: httpx.AsyncClient, imdb_id: str, tmdb_id
         abs_episode_count = tmdb_episodes_count + TMDB_ERROR_EPISODE_OFFSET
         total_pages = math.ceil(abs_episode_count / tvdb.EPISODE_PAGE)
         for i in range(max(1, total_pages)):
-            episodes_tasks.append(tvdb.get_translated_episodes(client, tvdb_series_id, i))
+            episodes_tasks.append(tvdb.get_translated_episodes(client, tvdb_series_id, i, language))
         
         translated_episodes = []
         episodes_tasks_result = await asyncio.gather(*episodes_tasks)
@@ -139,7 +161,7 @@ async def series_build_episodes(client: httpx.AsyncClient, imdb_id: str, tmdb_id
         for episode in translated_episodes:
             if episode['seasonNumber'] != 0: # Not for specials
                 video = {
-                    "name": f"Episodio {episode['number']}" if episode['name'] == None else episode['name'],
+                    "name": f"{translator.EPISODE_TRANSLATIONS[language]} {episode['number']}" if episode['name'] == None else episode['name'],
                     "season": episode['seasonNumber'],
                     "number": episode['number'],
                     "firstAired": episode['aired'] + 'T05:00:00.000Z' if episode['aired'] is not None else None,
@@ -159,7 +181,7 @@ async def series_build_episodes(client: httpx.AsyncClient, imdb_id: str, tmdb_id
                 
                 videos.append(video)
 
-        return await translator.translate_episodes(client, videos)
+        return await translator.translate_episodes(client, videos, language, tmdb_key)
 
 
     # TMDB episodes builder
@@ -184,20 +206,27 @@ async def series_build_episodes(client: httpx.AsyncClient, imdb_id: str, tmdb_id
     return videos
 
 
-def extract_series_episode_runtime(tmdb_data: dict) -> str:
+def extract_series_episode_runtime(tmdb_data: dict, cinemeta_data: dict) -> str:
     runtime = 0
     if len(tmdb_data.get('episode_run_time', [])) > 0:
         runtime = tmdb_data['episode_run_time'][0]
     else:
         runtime = (tmdb_data.get('last_episode_to_air') or {}).get('runtime', 'N/A')
 
+    # Cinemeta fallback
+    if not runtime:
+        return cinemeta_data.get('meta', {}).get('runtime', 0)
+
     return str(runtime) + ' min'
 
 
-def extract_logo(fanart_data: dict, tmdb_data: dict, cinemeta_data: dict) -> str:
+def extract_logo(fanart_data: dict, tmdb_data: dict, cinemeta_data: dict, language: str) -> str:
+    lang_iso_639_1 = language.split('-')[0]
     # Try TMDB logo
     if len(tmdb_data.get('images', {}).get('logos', [])) > 0:
-        return tmdb.TMDB_POSTER_URL + tmdb_data['images']['logos'][0]['file_path']
+        for logo in tmdb_data['images']['logos']:
+            if logo['iso_639_1'] == lang_iso_639_1:
+                return tmdb.TMDB_POSTER_URL + logo['file_path']
 
     # FanArt
     en_logo = ''
@@ -205,14 +234,14 @@ def extract_logo(fanart_data: dict, tmdb_data: dict, cinemeta_data: dict) -> str
     for logo in fanart_data.get('hdmovielogo', []):
         if logo['lang'] == 'en':
             en_logo = logo['url']
-        elif logo['lang'] == 'it':
+        elif logo['lang'] == lang_iso_639_1:
             return logo['url']
     
     # Try normal logo
     for logo in fanart_data.get('movielogo', []):
         if logo['lang'] == 'en':
             en_logo = logo['url']
-        elif logo['lang'] == 'it':
+        elif logo['lang'] == lang_iso_639_1:
             return logo['url']
         
     # Cinemeta

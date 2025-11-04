@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/static/style.css">
     <script src="/static/addonCard.js"></script>
     <script src="/static/installer.js"></script>
+    <script src="/static/utils.js"></script>
 </head>
 <body>
     <div class="container">
@@ -15,12 +16,36 @@
             <span class="translator">Translator</span>
         </div>
 
-        <div class="add-group" style="display: flex;">
-            <input type="text" id="addon-url" placeholder="URL dell'addon da aggiungere">
-            <button type="add" onclick="loadAddon(document.getElementById('addon-url').value, true, 'generator')">+</button>
-        </div>
+        
+        <div class="config-group" style="display: flex;">
+            <!-- 🔑 TMDB API Key -->
+            <label for="tmdb-key">🔑 TMDB API Key</label>
+            <input type="text" id="tmdb-key" placeholder="Enter your TMDB API key">
 
+            <label for="rpdb-key">🔑 RPDB API Key (Optional)</label>
+            <input type="text" id="rpdb-key" placeholder="Enter your RPDB API key">
+
+            <!-- 🌍 Language Selector -->
+            <label for="language">🌍 Preferred Language</label>
+            <select id="language"></select>
+            <script src="/static/languages.js"></script>
+
+            <!-- 🧩 Addon URL Loader -->
+            <label for="addon-url">🧩 Add Addon from URL</label>
+            <div class="add-group" style="display: flex;">
+                <input type="text" id="addon-url" placeholder="URL of the addon manifest">
+                <button type="add" onclick="loadAddon(document.getElementById('addon-url').value, true, 'generator', true)">+</button>
+            </div>
+        </div>
+        
         <div id="addons-container"></div>
     </div>
+    <div class="donation">
+        <a href='https://ko-fi.com/S6S71MEJ1N' target='_blank'>
+            <img height='36' src='https://storage.ko-fi.com/cdn/kofi4.png?v=6' alt='Buy Me a Coffee at ko-fi.com' />
+        </a>
+    </div>
+    
+
 </body>
 </html>

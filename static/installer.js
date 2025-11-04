@@ -1,10 +1,27 @@
 var transteArray = [];
 
 async function translateSelected(authKey, selectList) {
+
+    // ✅ Check TMDB API Key validity
+    const tmdbApiKey = document.getElementById("tmdb-key").value;
+    showLoader();
+    if (!tmdbApiKey) {
+        showError("⚠️ Please enter a TMDB API Key before continuing!");
+        hideLoader();
+        return null;
+    }
+
+    const valid = await validateTMDBKey(tmdbApiKey);
+    if (!valid) {
+        showError("❌ Invalid TMDB API Key. Please check your key and try again.");
+        hideLoader();
+        return null;
+    }
+
     const collection = await stremioAddonCollectionGet(authKey);
     var addons = [];
 
-    for(var i=0; i<collection.result.addons.length; i++) {
+    for (var i = 0; i < collection.result.addons.length; i++) {
         addons.push({
             "manifest": collection.result.addons[i].manifest,
             "transportUrl": collection.result.addons[i].transportUrl,
@@ -15,10 +32,10 @@ async function translateSelected(authKey, selectList) {
         });
     }
 
-    for(var j=0; j<selectList.length; j++) {
-        for(var i=0; i<addons.length; i++) {
+    for (var j = 0; j < selectList.length; j++) {
+        for (var i = 0; i < addons.length; i++) {
             if (selectList[j].id == addons[i].manifest.id) {
-                var addonUrl = generateTranslatorLink(addons[i].transportUrl, selectList[j].skipPoster, selectList[j].toastRatings);
+                var addonUrl = await generateTranslatorLink(addons[i].transportUrl, selectList[j].rpdb, selectList[j].toastRatings, selectList[j].tsPoster);
                 var response = await fetch(addonUrl);
                 var tranlatorManifest = await response.json();
                 addons[i] = {
@@ -33,7 +50,7 @@ async function translateSelected(authKey, selectList) {
             }
         }
         // Add new addon
-        var addonUrl = generateTranslatorLink(selectList[j].transportUrl, selectList[j].skipPoster, selectList[j].toastRatings);
+        var addonUrl = await generateTranslatorLink(selectList[j].transportUrl, selectList[j].rpdb, selectList[j].toastRatings, selectList[j].tsPoster);
         var response = await fetch(addonUrl);
         var tranlatorManifest = await response.json();
         addons[i] = {
@@ -48,8 +65,9 @@ async function translateSelected(authKey, selectList) {
 
     var resp = await stremioAddonCollectionSet(authKey, addons);
     if (resp.result.success == true) {
-        alert("Addon installati correttamente!")
-        //Refresh addons
+        hideLoader();
+        showSuccess("✅ Addons installed successfully!");
+        // Refresh addons
         await reloadAddons(authKey);
     }
 }
@@ -61,11 +79,17 @@ async function reloadAddons(authKey) {
     await stremioLoadAddons(authKey);
 }
 
-function generateTranslatorLink(addonUrl, skip_poster, toast_ratings) {
+function generateTranslatorLink(addonUrl, rpdb, toast_ratings, tsPoster) {
     const serverUrl = window.location.origin;
     const baseAddonUrl = getBaseUrl(addonUrl).replace("/manifest.json", "");
     const urlEncoded = btoa(baseAddonUrl);
-    const userSettings = `sp=${skip_poster},tr=${toast_ratings}`;
+    const tmdbApiKey = document.getElementById("tmdb-key").value;
+    const language = document.getElementById("language").value;
+    let rpdbKey = document.getElementById("rpdb-key").value;
+    if (!rpdbKey) {
+        rpdbKey = "t0-free-rpdb";
+    }
+    const userSettings = `rpdb=${rpdb},tr=${toast_ratings},tsp=${tsPoster},language=${language},tmdb_key=${tmdbApiKey},rpdb_key=${rpdbKey}`;
     
     if (addonUrl.includes(serverUrl)) {
         const addonBase64String = addonUrl.split("/")[3];
