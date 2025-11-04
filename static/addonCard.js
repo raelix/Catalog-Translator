@@ -142,11 +142,11 @@ function createSkipPosterOption(manifest) {
 
     const skipPosterCheckbox = document.createElement("input");
     skipPosterCheckbox.type = "checkbox";
-    skipPosterCheckbox.id = `skipPoster-${manifest.name}`;
+    skipPosterCheckbox.id = `skipPoster-${manifest.id}`;
     skipPosterDiv.appendChild(skipPosterCheckbox);
 
     const skipPosterLabel = document.createElement("label");
-    skipPosterLabel.htmlFor = `skipPoster-${manifest.name}`;
+    skipPosterLabel.htmlFor = `skipPoster-${manifest.id}`;
     skipPosterLabel.innerText = "Skip Poster";
     skipPosterDiv.appendChild(skipPosterLabel);
 
@@ -159,11 +159,11 @@ function createRPDBOption(manifest) {
 
     const rpdbCheckbox = document.createElement("input");
     rpdbCheckbox.type = "checkbox";
-    rpdbCheckbox.id = `rpdb-${manifest.name}`;
+    rpdbCheckbox.id = `rpdb-${manifest.id}`;
     rpdbDiv.appendChild(rpdbCheckbox);
 
     const rpdbLabel = document.createElement("label");
-    rpdbLabel.htmlFor = `rpdb-${manifest.name}`;
+    rpdbLabel.htmlFor = `rpdb-${manifest.id}`;
     rpdbLabel.innerText = "RPDB Posters";
     rpdbDiv.appendChild(rpdbLabel);
 
@@ -176,11 +176,11 @@ function createToastRatingsOption(manifest) {
 
     const toastRatingsCheckbox = document.createElement("input");
     toastRatingsCheckbox.type = "checkbox";
-    toastRatingsCheckbox.id = `toastRatings-${manifest.name}`;
+    toastRatingsCheckbox.id = `toastRatings-${manifest.id}`;
     toastRatingsDiv.appendChild(toastRatingsCheckbox);
 
     const toastRatingsLabel = document.createElement("label");
-    toastRatingsLabel.htmlFor = `toastRatings-${manifest.name}`;
+    toastRatingsLabel.htmlFor = `toastRatings-${manifest.id}`;
     toastRatingsLabel.innerText = "Toast Ratings Posters";
     toastRatingsDiv.appendChild(toastRatingsLabel);
 
@@ -193,11 +193,11 @@ function createTopStreamPosterOption(manifest) {
 
     const tsPosterCheckbox = document.createElement("input");
     tsPosterCheckbox.type = "checkbox";
-    tsPosterCheckbox.id = `tsPoster-${manifest.name}`;
+    tsPosterCheckbox.id = `tsPoster-${manifest.id}`;
     tsPosterDiv.appendChild(tsPosterCheckbox);
 
     const tsPosterLabel = document.createElement("label");
-    tsPosterLabel.htmlFor = `tsPoster-${manifest.name}`;
+    tsPosterLabel.htmlFor = `tsPoster-${manifest.id}`;
     tsPosterLabel.innerText = "Top Streaming Posters";
     tsPosterDiv.appendChild(tsPosterLabel);
 
@@ -235,17 +235,17 @@ function createCopyButton(manifest, url) {
 function createLinkTextBox(link, manifest) {
     const textArea = document.createElement("textarea");
     textArea.className = "read-only-textarea";
-    textArea.id = `linkBox-${manifest.name}`;
-    textArea.readOnly = true; 
+    textArea.id = `linkBox-${manifest.id}`;
+    textArea.readOnly = true;
     textArea.value = link;
     return textArea;
 }
 
 function toggleAddonSelection(installBtn, manifest, url) {
-    //const spCheckbox = document.getElementById(`skipPoster-${manifest.name}`);
-    const rpdbCheckbox = document.getElementById(`rpdb-${manifest.name}`);
-    const trCheckbox = document.getElementById(`toastRatings-${manifest.name}`);
-    const tsCheckbox = document.getElementById(`tsPoster-${manifest.name}`)
+    //const spCheckbox = document.getElementById(`skipPoster-${manifest.id}`);
+    const rpdbCheckbox = document.getElementById(`rpdb-${manifest.id}`);
+    const trCheckbox = document.getElementById(`toastRatings-${manifest.id}`);
+    const tsCheckbox = document.getElementById(`tsPoster-${manifest.id}`)
     if (installBtn.state === "active") {
         installBtn.state = "not_active";
         installBtn.innerText = "Remove";
@@ -280,7 +280,7 @@ function toggleAddonSelection(installBtn, manifest, url) {
 }
 
 async function copyLinkCard(manifest) {
-    const linkBox = document.getElementById(`linkBox-${manifest.name}`);
+    const linkBox = document.getElementById(`linkBox-${manifest.id}`);
     await navigator.clipboard.writeText(linkBox.value);
     showSuccess('✅ Link copied!');
 }
@@ -303,11 +303,11 @@ async function generateLinkByCard(manifest, url, linkGeneratorFunc) {
     }
 
     //
-    //const spCheckbox = document.getElementById(`skipPoster-${manifest.name}`);
-    const rpdbCheckbox = document.getElementById(`rpdb-${manifest.name}`);
-    const trCheckbox = document.getElementById(`toastRatings-${manifest.name}`);
-    const tsCheckbox = document.getElementById(`tsPoster-${manifest.name}`);
-    const linkBox = document.getElementById(`linkBox-${manifest.name}`)
+    //const spCheckbox = document.getElementById(`skipPoster-${manifest.id}`);
+    const rpdbCheckbox = document.getElementById(`rpdb-${manifest.id}`);
+    const trCheckbox = document.getElementById(`toastRatings-${manifest.id}`);
+    const tsCheckbox = document.getElementById(`tsPoster-${manifest.id}`);
+    const linkBox = document.getElementById(`linkBox-${manifest.id}`)
     //const skipQuery = spCheckbox.checked ? 1 : 0;
     const rpdbQuery = rpdbCheckbox.checked ? 1 : 0;
     const rateQuery = trCheckbox.checked ? 1 : 0;
